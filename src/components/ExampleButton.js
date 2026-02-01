@@ -1,4 +1,5 @@
 import React from 'react' /* Included for using states */
+import Button from '@mui/material/Button' /* MUI component design */
 
 export default function ExampleButton() {
   /* all main logic of the component here */
@@ -6,6 +7,6 @@ export default function ExampleButton() {
 
   /* the actual jsx component here */
   return (
-    <button> i am useless </button>
+    <Button variant="contained">Hello world</Button>
   )
 }
