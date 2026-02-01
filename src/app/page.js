@@ -6,7 +6,7 @@ export default function Home() {
     <div>
       <main>
         <ExampleButton />
-        <Link href="/auth/signup"> Signup </Link>
+        <Link href="/auth/signup"> Signup's </Link>
         <Link href="/auth/login"> Login </Link>
       </main>
     </div>
