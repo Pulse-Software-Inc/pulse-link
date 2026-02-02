@@ -1,17 +1,19 @@
 /* GET STARTED PAGE */
-import ExampleButton from "@/components/ExampleButton.js"
 import UserHeader from "@/components/UserHeader.js"
 import Link from 'next/link'
+import SignupBox from "@/components/GetStarted.js"
+import Image from 'next/image'
 
 export default function Home() {
   return (
-    <div>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #88d5f5 0%, #f5a4c8 100%)',
+      padding: '20px',
+      position: 'relative'
+    }}>
       <UserHeader />
-      <main>
-        <ExampleButton />
-        <Link href="/auth/signup"> Signup's </Link>
-        <Link href="/auth/login"> Login </Link>
-      </main>
+      <SignupBox />
     </div>
   );
 }
