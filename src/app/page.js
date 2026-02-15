@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function LandingPage() {
   const router = useRouter();
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 bg-[linear-gradient(to_right,#71E4FD,#B2C4FE,#D3B5FF,#FAB9D0)] ">
       
       {/* Main Card */}
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden">

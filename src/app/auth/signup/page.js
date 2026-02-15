@@ -34,11 +34,11 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen justify-center p-4">
+    <div className="min-h-screen justify-center p-4 bg-[linear-gradient(to_bottom_right,#ECB6E6,#D3B5FF,#B2C4FE,#71E4FD)]">
       {/* Logo in top left */}
-      <div className="absolute top-6 left-6 flex items-center gap-3">
-        <Image src="/PulseLink_logo.svg" alt="PulseLink" width={40} height={40} />
-        <span className="text-gray-800 text-2xl font-semibold">PulseLink</span>
+      <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
+        <Image src="/PulseLink_logo.svg" alt="PulseLink" width={100} height={100} />
+        <span className="text-white text-4xl">PulseLink</span>
       </div>
 
       {/* Centered Card */}
