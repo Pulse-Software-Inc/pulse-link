@@ -38,7 +38,7 @@ export default function SignUpPage() {
       {/* Logo in top left */}
       <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
         <Image src="/PulseLink_logo.svg" alt="PulseLink" width={100} height={100} />
-        <span className="text-white text-4xl">PulseLink</span>
+        <span className="text-white font-bold text-4xl">PulseLink</span>
       </div>
 
       {/* Centered Card */}
