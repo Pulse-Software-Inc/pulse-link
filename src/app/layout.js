@@ -9,8 +9,11 @@ const inter = Inter({
 
 export default function RootLayout({ children }) {
   return (
+    <html>
       <body className={`${inter.className} antialiased`}>
         {children}
       </body>
+    </html>
+
   );
 }
