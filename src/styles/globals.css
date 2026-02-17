@@ -1,4 +1,3 @@
-/* ./styles/globals.css */
 @import 'tailwindcss';
 @tailwind base;
 @tailwind components;
@@ -15,7 +14,7 @@ body {
   background: linear-gradient(135deg, #5EEDFD 0%, #DDB1FC 50%, #FFBBC9 100%);
   background-attachment: fixed;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-inter), -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
