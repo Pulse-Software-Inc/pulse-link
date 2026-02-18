@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 
+// Sidebar navigation data for each of the menu items, including title, icon, and link
 const SidebarData = [
     {
         title: "Dashboard",

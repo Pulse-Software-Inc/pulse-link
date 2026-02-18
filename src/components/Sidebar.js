@@ -6,7 +6,7 @@ import Image from "next/image";
 function Sidebar() {
     return (
         <div className="w-54 min-h-screen bg-[linear-gradient(to_bottom,#71E4FD,#B2C4FE,#D3B5FF,#ECB6E6)] flex flex-col p-6 shadow-lg">
-            {/* User Profile Section */}
+                {/* User Profile Section */}
             <div className="flex flex-row items-center gap-3 mb-8">
                 <Avatar
                     sx={{ 
