@@ -135,7 +135,7 @@ function UserProfileSection() {
           <TextField
             label="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
             error={!!emailError}
             helperText={emailError}
             size="small"
@@ -150,7 +150,7 @@ function UserProfileSection() {
           <TextField
             label="Phone Number"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={handlePhoneChange}
             error={!!phoneError}
             helperText={phoneError}
             size="small"
