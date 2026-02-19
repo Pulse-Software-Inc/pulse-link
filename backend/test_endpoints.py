@@ -93,6 +93,18 @@ def main():
     except Exception as e:
         print(f"Error getting real-time: {e}")
     
+    # test summary endpoint
+    try:
+        r = requests.get(f"{BASE_URL}/api/v1/biomarkers/summary?period=daily", 
+                         headers=headers, timeout=5)
+        if r.status_code == 200:
+            data = r.json()
+            print(f"Summary: {len(data.get('dashboard_data', []))} cards")
+        else:
+            print(f"Summary failed: {r.status_code}")
+    except Exception as e:
+        print(f"Error getting summary: {e}")
+    
     print()
     print("Done. Check output above for any FAILs.")
 

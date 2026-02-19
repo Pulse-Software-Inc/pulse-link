@@ -33,6 +33,7 @@ Add the javascript instructions when you google it
  PUT  `/api/v1/users/me` Yes 
  GET  `/api/v1/biomarkers/devices`  Yes 
  GET  `/api/v1/biomarkers/real-time` Yes 
+ GET  `/api/v1/biomarkers/summary` Yes  # NEW: Dashboard summary
  POST  `/api/v1/biomarkers/manual`  Yes 
  GET  `/api/v1/biomarkers/manual`  Yes 
  DELETE  `/api/v1/biomarkers/manual/{id}`  Yes 
