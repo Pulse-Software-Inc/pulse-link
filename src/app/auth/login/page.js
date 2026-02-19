@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -13,6 +15,8 @@ export default function LoginPage() {
     e.preventDefault();
     // Handle login logic here
     console.log('Login attempt:', { email, password, acceptTerms });
+    // Only redirects when login is successful 
+    router.push('/userdashboard');
   };
 
   return (

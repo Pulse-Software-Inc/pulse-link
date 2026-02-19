@@ -6,7 +6,7 @@ const SidebarData = [
     {
         title: "Dashboard",
         icon: <Image src="/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
-        link: "/auth/userdashboard"
+        link: "/userdashboard"
     },
     {
         title: "Settings",
