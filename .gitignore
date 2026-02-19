@@ -1,6 +1,8 @@
 # virtual environment
 .venv/
 
+# Amr Playground For Components
+src/amr-testing
 # dependencies
 /node_modules
 /.pnp
