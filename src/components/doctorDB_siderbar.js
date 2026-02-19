@@ -3,7 +3,7 @@ import doctorSidebarData from "./doctorDB_sidebarData";
 import { Avatar } from '@mui/material';
 import Image from "next/image";
 
-function doctorSidebar() {
+function DoctorSidebar() {
     return (
         <div className="w-54 min-h-screen bg-[linear-gradient(to_bottom,#71E4FD,#B2C4FE,#D3B5FF,#ECB6E6)] flex flex-col p-6 shadow-lg">
                 {/* User Profile Section */}
@@ -48,4 +48,4 @@ function doctorSidebar() {
     );
 }
 
-export default doctorSidebar; 
+export default DoctorSidebar; 
