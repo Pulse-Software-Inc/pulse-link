@@ -3,6 +3,7 @@
 
 # Amr Playground For Components
 src/amr-testing
+src/amin-testing
 # dependencies
 /node_modules
 /.pnp
