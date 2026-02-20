@@ -128,28 +128,75 @@ async def get_dashboard_summary(
     supports: daily, weekly, monthly
     """
     from app.core import firestore
-    from datetime import datetime
+    from datetime import datetime, timedelta
     
     try:
         uid = current_user["uid"]
         
-        # fetch recent biomarkers from firestore
-        biomarkers = firestore.get_recent_biomarkers(uid, limit=50)
+        # validate period
+        if period not in ["daily", "weekly", "monthly"]:
+            period = "daily"
+        
+        # calculate date range based on period
+        now = datetime.now()
+        if period == "daily":
+            days_back = 1
+            steps_goal = 10000
+            calories_goal = 500
+            period_label = "today"
+        elif period == "weekly":
+            days_back = 7
+            steps_goal = 70000  # 10k * 7
+            calories_goal = 3500  # 500 * 7
+            period_label = "this week"
+        else:  # monthly
+            days_back = 30
+            steps_goal = 300000  # 10k * 30
+            calories_goal = 15000  # 500 * 30
+            period_label = "this month"
+        
+        # get all biomarkers and filter by date range
+        all_biomarkers = firestore.get_all_biomarkers(uid)
+        cutoff_date = now - timedelta(days=days_back)
+        
+        # filter records within the period
+        filtered_records = []
+        for record in all_biomarkers:
+            timestamp = record.get("timestamp", "")
+            if timestamp:
+                try:
+                    # parse timestamp
+                    record_date = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                    if record_date >= cutoff_date:
+                        filtered_records.append(record)
+                except:
+                    # skip records with bad timestamps
+                    pass
+        
+        # if no records in period, fall back to recent data for demo
+        if not filtered_records:
+            filtered_records = firestore.get_recent_biomarkers(uid, limit=50)
         
         # fetch user devices
         devices = firestore.get_user_devices(uid)
         
-        # calculate totals from biomarker data
+        # calculate totals - sum for weekly/monthly, max for daily
         total_steps = 0
         total_calories = 0
         heart_rates = []
         last_sync = "never"
         
-        for record in biomarkers:
+        for record in filtered_records:
             if "steps" in record and record["steps"]:
-                total_steps = max(total_steps, record["steps"])
+                if period == "daily":
+                    total_steps = max(total_steps, record["steps"])
+                else:
+                    total_steps += record["steps"]
             if "calories" in record and record["calories"]:
-                total_calories = max(total_calories, record["calories"])
+                if period == "daily":
+                    total_calories = max(total_calories, record["calories"])
+                else:
+                    total_calories += record["calories"]
             if "heart_rate" in record and record["heart_rate"]:
                 heart_rates.append(record["heart_rate"])
             if "timestamp" in record:
@@ -166,25 +213,39 @@ async def get_dashboard_summary(
         if last_sync != "never":
             last_sync = "2 mins ago"  # simplified for now
         
-        # build dashboard card data format (matches frontend expectation)
+        # adjust labels based on period
+        if period == "daily":
+            steps_sub = "/10,000"
+            steps_footer = "goal: 10,000 steps daily"
+            cal_sub = "/500"
+        elif period == "weekly":
+            steps_sub = "/70,000"
+            steps_footer = "goal: 70,000 steps weekly"
+            cal_sub = "/3,500"
+        else:  # monthly
+            steps_sub = "/300,000"
+            steps_footer = "goal: 300,000 steps monthly"
+            cal_sub = "/15,000"
+        
+        # build dashboard card data format
         dashboard_data = [
             {
                 "id": "Steps",
                 "title": "Steps",
                 "iconSrc": "/Steps_Icon.svg",
                 "main": f"{total_steps:,}",
-                "sub": "/10,000",
-                "footer": "goal: 10,000 steps daily",
-                "progress": {"value": total_steps, "max": 10000}
+                "sub": steps_sub,
+                "footer": steps_footer,
+                "progress": {"value": total_steps, "max": steps_goal}
             },
             {
                 "id": "Kcal",
                 "title": "Calories Burned",
                 "iconSrc": "/Calories_Icon.svg",
                 "main": str(int(total_calories)),
-                "sub": "/500",
+                "sub": cal_sub,
                 "footer": None,
-                "progress": {"value": int(total_calories), "max": 500}
+                "progress": {"value": int(total_calories), "max": calories_goal}
             },
             {
                 "id": "Heart",
@@ -197,17 +258,17 @@ async def get_dashboard_summary(
             }
         ]
         
-        # also return structured summary
+        # return structured summary
         summary = {
-            "daily_steps": {
+            f"{period}_steps": {
                 "current": total_steps,
-                "goal": 10000,
-                "percentage": min(100, int((total_steps / 10000) * 100))
+                "goal": steps_goal,
+                "percentage": min(100, int((total_steps / steps_goal) * 100)) if steps_goal > 0 else 0
             },
-            "daily_calories": {
+            f"{period}_calories": {
                 "current": int(total_calories),
-                "goal": 500,
-                "percentage": min(100, int((total_calories / 500) * 100))
+                "goal": calories_goal,
+                "percentage": min(100, int((total_calories / calories_goal) * 100)) if calories_goal > 0 else 0
             },
             "heart_rate": {
                 "current": avg_heart_rate,
@@ -215,15 +276,17 @@ async def get_dashboard_summary(
                 "last_sync": last_sync
             },
             "devices_connected": len(devices),
-            "period": period
+            "period": period,
+            "days_in_period": days_back,
+            "records_found": len(filtered_records)
         }
         
-        print(f"DEBUG: summary generated for user {uid}, period={period}")
+        print(f"DEBUG: {period} summary generated for user {uid}, {len(filtered_records)} records")
         
         return {
             "user_id": uid,
             "period": period,
-            "date": datetime.now().isoformat(),
+            "date": now.isoformat(),
             "dashboard_data": dashboard_data,
             "summary": summary
         }

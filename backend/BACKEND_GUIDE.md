@@ -33,7 +33,7 @@ Add the javascript instructions when you google it
  PUT  `/api/v1/users/me` Yes 
  GET  `/api/v1/biomarkers/devices`  Yes 
  GET  `/api/v1/biomarkers/real-time` Yes 
- GET  `/api/v1/biomarkers/summary` Yes  # Dashboard summary
+ GET  `/api/v1/biomarkers/summary?period=daily/weekly/monthly` Yes  # Dashboard summary
  GET  `/api/v1/biomarkers/export` Yes    # CSV export
  POST  `/api/v1/biomarkers/manual`  Yes 
  GET  `/api/v1/biomarkers/manual`  Yes 
