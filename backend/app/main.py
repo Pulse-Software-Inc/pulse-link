@@ -27,16 +27,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if not firebase_admin._apps:
+# check for mock mode (for CI/testing)
+use_mock = os.getenv("USE_MOCK", "false").lower() == "true"
+
+if use_mock:
+    logger.info("Using mock database mode")
+    from app.core.mock_db import mock_db
+    app.state.db = mock_db
+    app.state.use_mock = True
+elif not firebase_admin._apps:
     cred_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "firebase-service-account.json")
     if not os.path.exists(cred_path):
         raise RuntimeError(f"Firebase service account not found at {cred_path}")
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
     logger.info("Firebase initialized")
-
-app.state.db = firestore.client()
-app.state.use_mock = False
+    app.state.db = firestore.client()
+    app.state.use_mock = False
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")

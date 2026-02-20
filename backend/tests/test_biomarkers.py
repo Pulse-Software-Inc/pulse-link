@@ -8,9 +8,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app.main import app
 
 client = TestClient(app)
-USER_TOKEN = os.getenv("FIREBASE_ID_TOKEN")
 
-if not USER_TOKEN:
+# check for mock mode
+USE_MOCK = os.getenv("USE_MOCK", "false").lower() == "true"
+USER_TOKEN = os.getenv("FIREBASE_ID_TOKEN", "mock_token" if USE_MOCK else None)
+
+if not USE_MOCK and not os.getenv("FIREBASE_ID_TOKEN"):
     pytest.skip("FIREBASE_ID_TOKEN not set", allow_module_level=True)
 
 headers = {"Authorization": f"Bearer {USER_TOKEN}"}

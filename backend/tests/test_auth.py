@@ -9,10 +9,12 @@ from app.main import app
 
 client = TestClient(app)
 
-USER_TOKEN = os.getenv("FIREBASE_ID_TOKEN")
-PROVIDER_TOKEN = os.getenv("FIREBASE_PROVIDER_TOKEN")
+# check for mock mode - skip if using mock
+USE_MOCK = os.getenv("USE_MOCK", "false").lower() == "true"
+USER_TOKEN = os.getenv("FIREBASE_ID_TOKEN", "mock_token" if USE_MOCK else None)
+PROVIDER_TOKEN = os.getenv("FIREBASE_PROVIDER_TOKEN", "mock_token" if USE_MOCK else None)
 
-if not USER_TOKEN:
+if not USE_MOCK and not os.getenv("FIREBASE_ID_TOKEN"):
     pytest.skip("FIREBASE_ID_TOKEN not set", allow_module_level=True)
 
 
@@ -52,7 +54,7 @@ def test_provider_endpoint_with_wrong_role():
     assert response.status_code in (401, 403)
 
 
-@pytest.mark.skipif(not PROVIDER_TOKEN, reason="FIREBASE_PROVIDER_TOKEN not set")
+@pytest.mark.skipif(not PROVIDER_TOKEN or USE_MOCK, reason="FIREBASE_PROVIDER_TOKEN not set or using mock mode")
 def test_provider_endpoint_with_provider_token():
     headers = {"Authorization": f"Bearer {PROVIDER_TOKEN}"}
     response = client.get("/api/v1/providers/patients", headers=headers)
