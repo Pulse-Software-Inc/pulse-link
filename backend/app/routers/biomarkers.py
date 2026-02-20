@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, Depends, Request, HTTPException, status, Response
 from typing import Optional
 import sys
 import os
+import csv
+import io
+from datetime import datetime
 
 # fix path so we can import
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -228,3 +231,68 @@ async def get_dashboard_summary(
     except Exception as e:
         print(f"DEBUG: error in summary: {e}")
         raise HTTPException(status_code=500, detail=f"failed to get summary: {e}")
+
+
+@router.get("/export")
+async def export_biomarkers(
+    request: Request,
+    format: str = "csv",
+    current_user: dict = Depends(get_current_user),
+):
+    # export biomarker data to csv (pdf coming later)
+    from app.core import firestore
+    
+    try:
+        uid = current_user["uid"]
+        
+        # get all biomarker data for this user
+        biomarkers = firestore.get_all_biomarkers(uid)
+        
+        if format.lower() == "csv":
+            # create csv in memory
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # write header row
+            writer.writerow([
+                "timestamp", "device_id", "heart_rate", "steps", 
+                "calories", "blood_pressure_systolic", "blood_pressure_diastolic",
+                "sleep_hours", "mood"
+            ])
+            
+            # write data rows
+            for record in biomarkers:
+                writer.writerow([
+                    record.get("timestamp", ""),
+                    record.get("device_id", ""),
+                    record.get("heart_rate", ""),
+                    record.get("steps", ""),
+                    record.get("calories", ""),
+                    record.get("blood_pressure_systolic", ""),
+                    record.get("blood_pressure_diastolic", ""),
+                    record.get("sleep_hours", ""),
+                    record.get("mood", "")
+                ])
+            
+            # get the csv content
+            csv_content = output.getvalue()
+            output.close()
+            
+            print(f"DEBUG: exported {len(biomarkers)} records for user {uid}")
+            
+            # return as downloadable file
+            filename = f"biomarkers_{uid}_{datetime.now().strftime('%Y%m%d')}.csv"
+            return Response(
+                content=csv_content,
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}"
+                }
+            )
+        
+        else:
+            raise HTTPException(status_code=400, detail=f"unsupported format: {format}")
+            
+    except Exception as e:
+        print(f"DEBUG: export error: {e}")
+        raise HTTPException(status_code=500, detail=f"export failed: {e}")

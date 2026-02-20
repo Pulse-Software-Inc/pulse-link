@@ -135,6 +135,17 @@ def get_recent_biomarkers(user_id: str, limit: int = 10) -> List[Dict[str, Any]]
         return []
 
 
+def get_all_biomarkers(user_id: str) -> List[Dict[str, Any]]:
+    # get all biomarkers for a user (for export)
+    try:
+        db = get_db()
+        docs = db.collection("biomarkers").where("user_id", "==", user_id).get()
+        return [doc_to_dict(d) for d in docs]
+    except Exception as e:
+        print(f"Error getting all biomarkers: {e}")
+        return []
+
+
 def get_consent_settings(user_id: str) -> Dict[str, Any]:
     db = get_db()
     try:
