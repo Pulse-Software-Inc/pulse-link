@@ -1,3 +1,5 @@
+'use client';
+
 //using this file for the data going to be used in the DB cards. 
 const DB_cardsData = [
     {

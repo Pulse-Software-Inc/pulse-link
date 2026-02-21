@@ -1,5 +1,6 @@
 /*Creating dashboard cards to be reused in the user dashboard page and 
 doctor dashboard page. */
+'use client';
 
 import React from 'react';
 import Image from 'next/image';
@@ -8,7 +9,8 @@ function clamp(x, min, max) {
     return Math.max(min, Math.min(max, x));
 }
 
-function progressBar({ value = 0, max = 100 }) {
+function ProgressBar({ value = 0, max = 100 }) {
+    const safeMax = max == 0 ? 1 : max;
     const percen = clamp((value / max) * 100, 0, 100);
     
     return (
