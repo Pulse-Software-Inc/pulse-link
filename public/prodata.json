@@ -1,0 +1,106 @@
+{
+  "provider_id": "prov_001",
+  "provider_email": "dr.smith@hospital.com",
+  "provider_profile": {
+    "uid": "prov_001",
+    "email": "dr.smith@hospital.com",
+    "name": "Dr. Sarah Smith",
+    "specialty": "Cardiology",
+    "role": "provider",
+    "created_at": "2025-08-10T09:00:00Z",
+    "updated_at": "2026-02-18T11:30:00Z"
+  },
+  "patients": [
+    {
+      "uid": "user123",
+      "email": "john.doe@email.com",
+      "age": 45,
+      "gender": "male",
+      "consent_granted": true,
+      "consent_updated_at": "2026-02-15T10:30:00Z",
+      "last_activity": "2026-02-20T18:45:00Z",
+      "recent_biomarkers": [
+        {
+          "id": "bm_001",
+          "user_id": "user123",
+          "timestamp": "2026-02-20T08:00:00Z",
+          "heart_rate": 68,
+          "steps": 1200,
+          "calories": 450.5,
+          "blood_pressure_systolic": 118,
+          "blood_pressure_diastolic": 76,
+          "sleep_hours": 7.5,
+          "mood": "good"
+        },
+        {
+          "id": "bm_002",
+          "user_id": "user123",
+          "timestamp": "2026-02-20T12:30:00Z",
+          "heart_rate": 85,
+          "steps": 4500,
+          "calories": 1200.0,
+          "blood_pressure_systolic": 122,
+          "blood_pressure_diastolic": 78,
+          "sleep_hours": null,
+          "mood": null
+        }
+      ],
+      "summary": {
+        "period": "weekly",
+        "avg_heart_rate": 74.5,
+        "total_steps": 58400,
+        "total_calories": 15400.0,
+        "data_points": 21
+      }
+    },
+    {
+      "uid": "user456",
+      "email": "jane.smith@email.com",
+      "age": 32,
+      "gender": "female",
+      "consent_granted": true,
+      "consent_updated_at": "2026-02-10T14:20:00Z",
+      "last_activity": "2026-02-19T20:15:00Z",
+      "recent_biomarkers": [
+        {
+          "id": "bm_101",
+          "user_id": "user456",
+          "timestamp": "2026-02-19T20:00:00Z",
+          "heart_rate": 72,
+          "steps": 9800,
+          "calories": 2100.0,
+          "blood_pressure_systolic": 110,
+          "blood_pressure_diastolic": 70,
+          "sleep_hours": 8.0,
+          "mood": "excellent"
+        }
+      ],
+      "summary": {
+        "period": "weekly",
+        "avg_heart_rate": 70.2,
+        "total_steps": 61200,
+        "total_calories": 16200.0,
+        "data_points": 18
+      }
+    },
+    {
+      "uid": "user789",
+      "email": "bob.wilson@email.com",
+      "age": 58,
+      "gender": "male",
+      "consent_granted": false,
+      "consent_updated_at": "2026-01-25T09:00:00Z",
+      "last_activity": "2026-02-10T16:30:00Z",
+      "recent_biomarkers": [],
+      "summary": null
+    }
+  ],
+  "pending_consents": [
+    {
+      "uid": "user789",
+      "email": "bob.wilson@email.com",
+      "requested_at": "2026-02-15T10:00:00Z",
+      "status": "pending"
+    }
+  ]
+}

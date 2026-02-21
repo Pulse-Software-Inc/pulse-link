@@ -105,6 +105,22 @@ def main():
     except Exception as e:
         print(f"Error getting summary: {e}")
     
+    # test csv export
+    try:
+        r = requests.get(f"{BASE_URL}/api/v1/biomarkers/export?format=csv",
+                         headers=headers, timeout=10)
+        if r.status_code == 200:
+            # check if we got csv content
+            content_type = r.headers.get('content-type', '')
+            if 'csv' in content_type or r.text.startswith('timestamp'):
+                print(f"CSV Export: OK (size: {len(r.text)} chars)")
+            else:
+                print(f"CSV Export: wrong format")
+        else:
+            print(f"CSV Export failed: {r.status_code}")
+    except Exception as e:
+        print(f"Error exporting csv: {e}")
+    
     print()
     print("Done. Check output above for any FAILs.")
 

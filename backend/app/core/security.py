@@ -1,12 +1,24 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import firebase_admin.auth as firebase_auth
+import os
 
 security = HTTPBearer()
+
+# check if in mock mode
+USE_MOCK = os.getenv("USE_MOCK", "false").lower() == "true"
 
 
 async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     token = credentials.credentials
+
+    # mock mode - accept any token starting with "mock_"
+    if USE_MOCK and token.startswith("mock_"):
+        return {
+            "uid": "user123",
+            "email": "test@pulselink.com",
+            "role": "user"
+        }
 
     try:
         decoded_token = firebase_auth.verify_id_token(token)

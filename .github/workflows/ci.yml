@@ -30,6 +30,7 @@ jobs:
         python3 -m pytest tests/ -v
       env:
         CI: true
+        USE_MOCK: true
     
     - name: Lint with flake8
       run: |

@@ -1,8 +1,10 @@
 from firebase_admin import firestore as fs
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import os
 
 _db = None
+USE_MOCK = os.getenv("USE_MOCK", "false").lower() == "true"
 
 def get_db():
     global _db
@@ -12,6 +14,9 @@ def get_db():
 
 
 def get_user(uid: str) -> Optional[Dict[str, Any]]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_user(uid)
     client = get_db()
     try:
         doc = client.collection("users").document(uid).get()
@@ -48,6 +53,9 @@ def create_user(uid: str, user_data: Dict[str, Any]) -> bool:
 
 
 def get_user_devices(user_id: str) -> List[Dict[str, Any]]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_user_devices(user_id)
     try:
         db = get_db()
         docs = db.collection("devices").where("user_id", "==", user_id).get()
@@ -86,6 +94,9 @@ def add_device(user_id: str, device_data: Dict[str, Any]) -> str:
 
 
 def get_manual_entries(user_id: str) -> List[Dict[str, Any]]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_manual_entries(user_id)
     try:
         db = get_db()
         docs = db.collection("manual_entries").where("user_id", "==", user_id).get()
@@ -95,6 +106,9 @@ def get_manual_entries(user_id: str) -> List[Dict[str, Any]]:
 
 
 def add_manual_entry(user_id: str, entry_data: Dict[str, Any]) -> str:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.add_manual_entry(user_id, entry_data)
     db = get_db()
     try:
         entry_data["user_id"] = user_id
@@ -126,12 +140,29 @@ def delete_manual_entry(entry_id: str) -> bool:
 
 
 def get_recent_biomarkers(user_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_real_time_data(user_id)
     try:
         db = get_db()
         docs = db.collection("biomarkers").where("user_id", "==", user_id).limit(limit).get()
         return [doc_to_dict(d) for d in docs]
     except Exception as e:
         print(f"Error getting biomarkers: {e}")
+        return []
+
+
+def get_all_biomarkers(user_id: str) -> List[Dict[str, Any]]:
+    # get all biomarkers for a user (for export)
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.biomarkers.get(user_id, [])
+    try:
+        db = get_db()
+        docs = db.collection("biomarkers").where("user_id", "==", user_id).get()
+        return [doc_to_dict(d) for d in docs]
+    except Exception as e:
+        print(f"Error getting all biomarkers: {e}")
         return []
 
 

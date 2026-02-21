@@ -1,12 +1,12 @@
 'use client';
 import React from 'react';
-import doctorSidebar from '@/components/doctorDB_siderbar';
+import DoctorSidebar from '@/components/doctorDB_siderbar';
 import Image from 'next/image';
 
-function doctorDashboard() {
+function DoctorDashboard() {
     return (
         <div className="flex min-h-screen">
-            <doctorSidebar />
+            <DoctorSidebar />
             <div className="flex-1 bg-white">
                 {/* Header */}
                 <header className="flex items-center justify-between px-8 py-3 mx-5 border-b border-gray-400">
@@ -24,4 +24,4 @@ function doctorDashboard() {
     );
 }
 
-export default doctorDashboard;
+export default DoctorDashboard;
