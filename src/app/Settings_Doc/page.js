@@ -11,14 +11,12 @@ import {
   FormControlLabel,
 } from "@mui/material"
 import Image from "next/image"
-import { SettingsSidebar } from "@/components/settings_user_sidebar"
+import { SettingsSidebar } from "@/components/settings_dr_sidebar"
 
 const sectionIds = [
   "user-profile",
-  "authorized-access",
   "data-privacy",
   "appearance",
-  "goals",
   "notifications",
 ]
 
@@ -203,67 +201,6 @@ function UserProfileSection() {
     </section>
   )
 }
-
-/* ── Authorized Access ── */
-function AuthorizedAccessSection() {
-  return (
-    <section id="authorized-access" className="scroll-mt-8">
-      <h2 className="mb-1 text-xl font-bold" style={{ color: "#1a1a1a" }}>
-        Authorized Access
-      </h2>
-      <p className="mb-4 text-sm leading-relaxed" style={{ color: "#6b7280" }}>
-        These are the users you have given access to to view your data real-time
-      </p>
-
-      <div className="flex items-center justify-between rounded-xl px-5 py-4" style={{ border: "1px solid #d1d5db", background: "#fff" }}>
-        <div className="flex items-center gap-3">
-          <Avatar
-            sx={{
-              width: 42,
-              height: 42,
-              bgcolor: "#f3f4f6",
-              color: "#9ca3af",
-              fontSize: 16,
-              fontWeight: 600,
-            }}
-          >
-            D
-          </Avatar>
-          <div>
-            <p className="text-sm font-semibold" style={{ color: "#1a1a1a" }}>Dr. User 1</p>
-            <Chip
-              label="ONLINE"
-              size="small"
-              sx={{
-                bgcolor: "#e8f5e9",
-                color: "#2e7d32",
-                fontWeight: 700,
-                fontSize: 10,
-                height: 20,
-                mt: 0.5,
-              }}
-            />
-          </div>
-        </div>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{
-            textTransform: "none",
-            bgcolor: "#FF6363",
-            fontWeight: 700,
-            fontSize: 11,
-            borderRadius: "16px",
-            px: 2.5,
-            "&:hover": { bgcolor: "#FF6363" },
-          }}
-        >
-          Remove
-        </Button>
-      </div>
-    </section>
-  )
-}
 /* ── Data and Privacy ── */
 function DataPrivacySection() {
   return (
@@ -291,9 +228,7 @@ function DataPrivacySection() {
     </section>
   )
 }
-
-
-/* ── Appearance ─────────────────────────────────────── */
+/* ── Appearance ──*/
 function AppearanceSection() {
   const [darkMode, setDarkMode] = useState(false)
 
@@ -326,72 +261,7 @@ function AppearanceSection() {
     </section>
   )
 }
-
-/* ── Goals ──────────────────────────────────────────── */
-const goals = [
-  {
-    iconSrc: "/Steps_Icon.svg",
-    label: "Steps",
-    value: "10,000 per day",
-    highlighted: false,
-  },
-  {
-    iconSrc: "/Calories_Icon.svg",
-    label: "Calories Burned",
-    value: "500 per day",
-    highlighted: false,
-  },
-]
-
-function GoalsSection() {
-  return (
-    <section id="goals" className="scroll-mt-8">
-      <h2 className="mb-4 text-lg font-bold" style={{ color: "#1a1a1a" }}>Goals</h2>
-      <div className="flex flex-col gap-3">
-        {goals.map((goal) => (
-          <div
-            key={goal.label}
-            className="flex items-center justify-between rounded-xl px-5 py-4"
-            style={{
-              border: "2px solid #d1d5db",
-              background: "#fff",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <Image src={goal.iconSrc} alt={goal.label} width={24} height={24} />
-              <span className="text-sm font-bold" style={{ color: "#1a1a1a" }}>
-                {goal.label}
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm" style={{ color: "#6b7280" }}>
-                {goal.value}
-              </span>
-              <Button
-                variant="contained"
-                size="small"
-                sx={{
-                  textTransform: "none",
-                  bgcolor: "#e1b3f6",
-                  fontWeight: 700,
-                  fontSize: 11,
-                  borderRadius: "12px",
-                  px: 2,
-                  minWidth: "auto",
-                  "&:hover": { bgcolor: "#e1b3f6" },
-                }}
-              >
-                EDIT
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-/* ── Notifications ──────────────────────────────────── */
+/* ── Notifications ─── */
 function NotificationsSection() {
   const [notifs, setNotifs] = useState(true)
 
@@ -421,8 +291,6 @@ function NotificationsSection() {
     </section>
   )
 }
-
-/* ── Main Settings Page ─────────────────────────────── */
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("user-profile")
   const scrollRef = useRef(null)
@@ -500,12 +368,9 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-10">
               <UserProfileSection />
               <hr style={{ borderColor: "#e5e7eb" }} />
-              <AuthorizedAccessSection />
               <DataPrivacySection />
               <hr style={{ borderColor: "#e5e7eb" }} />
               <AppearanceSection />
-              <hr style={{ borderColor: "#e5e7eb" }} />
-              <GoalsSection />
               <hr style={{ borderColor: "#e5e7eb" }} />
               <NotificationsSection />
               <hr style={{ borderColor: "#e5e7eb" }} />
