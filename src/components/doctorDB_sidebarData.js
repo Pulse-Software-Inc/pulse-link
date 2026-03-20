@@ -11,7 +11,7 @@ const doctorSidebarData = [
     {
         title: "Settings",
         icon: <Image src="/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
-        link: "/auth/settings"
+        link: "/Settings_Doc"
     },
 ];
 
