@@ -52,7 +52,7 @@ export default function DB_card({ val }) {
                     
                     {val.progress ? (
                         <div className="mt-3">
-                            <progressBar value={val.progress.value} max={val.progress.max} />
+                            <ProgressBar value={val.progress.value} max={val.progress.max} />
                             </div>
                     ) : null}
 
