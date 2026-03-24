@@ -1,9 +1,7 @@
 "use client";
 import LinkButton from "@/components/basics/LinkButton"
-import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
-  const router = useRouter();
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 bg-[linear-gradient(to_right,#71E4FD,#B2C4FE,#D3B5FF,#FAB9D0)] ">
 
