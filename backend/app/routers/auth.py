@@ -38,7 +38,6 @@ async def verify_token(current_user: dict = Depends(get_current_user)):
 
 @router.post("/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest):
-    # TODO: add rate limiting so people dont spam this
     try:
         link = firebase_auth.generate_password_reset_link(request.email)
         
@@ -55,7 +54,7 @@ async def forgot_password(request: ForgotPasswordRequest):
             "email": request.email
         }
     except Exception as e:
-        print(f"DEBUG: forgot password error: {e}")  # TODO: remove this
+        print(f"DEBUG: forgot password error: {e}")
         raise HTTPException(
             status_code=500,
             detail="something went wrong"
@@ -107,7 +106,6 @@ async def change_password(
             "user_id": current_user["uid"]
         }
     except Exception as e:
-        # TODO: handle different error types
         raise HTTPException(
             status_code=500,
             detail="update failed"
