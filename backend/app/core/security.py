@@ -14,6 +14,13 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
 
     # mock mode - accept any token starting with "mock_"
     if USE_MOCK and token.startswith("mock_"):
+        # check if it's a provider token
+        if "provider" in token.lower():
+            return {
+                "uid": "provider456",
+                "email": "dr.smith@hospital.com",
+                "role": "healthcare_provider"
+            }
         return {
             "uid": "user123",
             "email": "test@pulselink.com",
