@@ -105,16 +105,315 @@ async def delete_manual_entry(
 @router.get("/historical")
 async def get_historical_data(
     request: Request,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    date: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
-    # TODO: implement this properly
-    return {
-        "user_id": current_user["uid"],
-        "message": "Historical data not implemented yet",
-        "date_range": {"start": start_date, "end": end_date},
-    }
+    """
+    get week vs week historical comparison.
+    pass date param (YYYY-MM-DD) or defaults to today.
+    returns current week vs previous week comparison.
+    """
+    from app.core import firestore
+    from datetime import datetime, timedelta
+    
+    try:
+        uid = current_user["uid"]
+        
+        # parse date or use today
+        if date:
+            try:
+                target_date = datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="invalid date format, use YYYY-MM-DD")
+        else:
+            target_date = datetime.now()
+        
+        # calculate current week (sunday to saturday)
+        # weekday(): monday=0, sunday=6
+        days_since_sunday = (target_date.weekday() + 1) % 7
+        current_week_start = target_date - timedelta(days=days_since_sunday)
+        current_week_end = current_week_start + timedelta(days=6)
+        
+        # previous week
+        prev_week_start = current_week_start - timedelta(days=7)
+        prev_week_end = prev_week_start + timedelta(days=6)
+        
+        print(f"DEBUG: current week {current_week_start.date()} to {current_week_end.date()}")
+        print(f"DEBUG: prev week {prev_week_start.date()} to {prev_week_end.date()}")
+        
+        # fetch all biomarkers for user
+        all_biomarkers = firestore.get_all_biomarkers(uid)
+        
+        # helper to parse timestamp
+        def parse_ts(ts):
+            if not ts:
+                return None
+            try:
+                return datetime.fromisoformat(ts.replace("Z", "+00:00").replace("+00:00", ""))
+            except:
+                return None
+        
+        # categorize data into weeks
+        current_week_data = []
+        prev_week_data = []
+        
+        for record in all_biomarkers:
+            ts = record.get("timestamp", "")
+            record_date = parse_ts(ts)
+            if not record_date:
+                continue
+            
+            # normalize to date only for comparison
+            record_date_only = record_date.date()
+            
+            if current_week_start.date() <= record_date_only <= current_week_end.date():
+                current_week_data.append(record)
+            elif prev_week_start.date() <= record_date_only <= prev_week_end.date():
+                prev_week_data.append(record)
+        
+        print(f"DEBUG: found {len(current_week_data)} records current week, {len(prev_week_data)} prev week")
+        
+        # helper to calculate totals for a week
+        def calc_week_totals(records):
+            totals = {
+                "steps": 0,
+                "calories": 0,
+                "heart_rates": [],
+                "sleep_hours": 0,
+                "record_count": len(records)
+            }
+            
+            for r in records:
+                if r.get("steps"):
+                    totals["steps"] += r["steps"]
+                if r.get("calories"):
+                    totals["calories"] += r["calories"]
+                if r.get("heart_rate"):
+                    totals["heart_rates"].append(r["heart_rate"])
+                if r.get("sleep_hours"):
+                    totals["sleep_hours"] += r["sleep_hours"]
+            
+            # calc avg heart rate
+            if totals["heart_rates"]:
+                totals["heart_rate_avg"] = sum(totals["heart_rates"]) // len(totals["heart_rates"])
+            else:
+                totals["heart_rate_avg"] = 0
+            
+            return totals
+        
+        # helper for daily breakdown
+        def daily_breakdown(records, week_start):
+            days = {}
+            for i in range(7):
+                day_date = week_start + timedelta(days=i)
+                days[day_date.strftime("%Y-%m-%d")] = {
+                    "date": day_date.strftime("%Y-%m-%d"),
+                    "day_name": day_date.strftime("%a"),
+                    "steps": 0,
+                    "calories": 0,
+                    "heart_rate_avg": 0,
+                    "heart_rates": [],
+                    "record_count": 0
+                }
+            
+            for r in records:
+                ts = r.get("timestamp", "")
+                record_date = parse_ts(ts)
+                if not record_date:
+                    continue
+                
+                date_key = record_date.strftime("%Y-%m-%d")
+                if date_key in days:
+                    days[date_key]["record_count"] += 1
+                    if r.get("steps"):
+                        days[date_key]["steps"] += r["steps"]
+                    if r.get("calories"):
+                        days[date_key]["calories"] += r["calories"]
+                    if r.get("heart_rate"):
+                        days[date_key]["heart_rates"].append(r["heart_rate"])
+            
+            # calc avg heart rates
+            for day in days.values():
+                if day["heart_rates"]:
+                    day["heart_rate_avg"] = sum(day["heart_rates"]) // len(day["heart_rates"])
+                del day["heart_rates"]  # remove the list
+            
+            return list(days.values())
+        
+        # calculate totals
+        current_totals = calc_week_totals(current_week_data)
+        prev_totals = calc_week_totals(prev_week_data)
+        
+        # calculate changes
+        def calc_change(current, previous):
+            if previous == 0:
+                return {"absolute": current, "percentage": 100.0 if current > 0 else 0.0}
+            abs_change = current - previous
+            pct_change = round((abs_change / previous) * 100, 1)
+            return {"absolute": abs_change, "percentage": pct_change}
+        
+        changes = {
+            "steps": calc_change(current_totals["steps"], prev_totals["steps"]),
+            "calories": calc_change(current_totals["calories"], prev_totals["calories"]),
+            "heart_rate_avg": calc_change(current_totals["heart_rate_avg"], prev_totals["heart_rate_avg"]),
+            "sleep_hours": calc_change(current_totals["sleep_hours"], prev_totals["sleep_hours"]),
+            "record_count": calc_change(current_totals["record_count"], prev_totals["record_count"])
+        }
+        
+        # determine trend direction
+        def get_trend(current, previous):
+            if current > previous:
+                return "up"
+            elif current < previous:
+                return "down"
+            return "same"
+        
+        trends = {
+            "steps": get_trend(current_totals["steps"], prev_totals["steps"]),
+            "calories": get_trend(current_totals["calories"], prev_totals["calories"]),
+            "heart_rate_avg": get_trend(current_totals["heart_rate_avg"], prev_totals["heart_rate_avg"])
+        }
+        
+        response = {
+            "user_id": uid,
+            "comparison_date": target_date.strftime("%Y-%m-%d"),
+            "current_week": {
+                "label": "this week",
+                "start": current_week_start.strftime("%Y-%m-%d"),
+                "end": current_week_end.strftime("%Y-%m-%d"),
+                "totals": {
+                    "steps": current_totals["steps"],
+                    "calories": current_totals["calories"],
+                    "heart_rate_avg": current_totals["heart_rate_avg"],
+                    "sleep_hours": current_totals["sleep_hours"],
+                    "record_count": current_totals["record_count"]
+                },
+                "daily_breakdown": daily_breakdown(current_week_data, current_week_start)
+            },
+            "previous_week": {
+                "label": "last week",
+                "start": prev_week_start.strftime("%Y-%m-%d"),
+                "end": prev_week_end.strftime("%Y-%m-%d"),
+                "totals": {
+                    "steps": prev_totals["steps"],
+                    "calories": prev_totals["calories"],
+                    "heart_rate_avg": prev_totals["heart_rate_avg"],
+                    "sleep_hours": prev_totals["sleep_hours"],
+                    "record_count": prev_totals["record_count"]
+                },
+                "daily_breakdown": daily_breakdown(prev_week_data, prev_week_start)
+            },
+            "changes": changes,
+            "trends": trends,
+            "summary": {
+                "steps_improved": current_totals["steps"] > prev_totals["steps"],
+                "calories_improved": current_totals["calories"] > prev_totals["calories"],
+                "overall_status": "improving" if current_totals["steps"] > prev_totals["steps"] else "needs attention"
+            }
+        }
+        
+        print(f"DEBUG: historical comparison generated for user {uid}")
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"DEBUG: error in historical: {e}")
+        raise HTTPException(status_code=500, detail=f"failed to get historical data: {e}")
+
+
+@router.get("/alerts/check")
+async def check_alerts(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    check current biomarker data against user's alert thresholds.
+    returns any alerts that are currently triggered.
+    """
+    from app.core import firestore
+    
+    try:
+        uid = current_user["uid"]
+        
+        # get user's alert thresholds
+        alerts = firestore.get_user_alerts(uid)
+        
+        if not alerts:
+            return {
+                "user_id": uid,
+                "alerts_triggered": [],
+                "message": "no alerts configured"
+            }
+        
+        # get recent biomarker data
+        recent_data = firestore.get_recent_biomarkers(uid, limit=50)
+        
+        if not recent_data:
+            return {
+                "user_id": uid,
+                "alerts_triggered": [],
+                "message": "no biomarker data available"
+            }
+        
+        # get the latest values for each biomarker type
+        latest_values = {}
+        for record in recent_data:
+            for key in ["heart_rate", "steps", "calories", "sleep_hours", "blood_pressure_systolic", "blood_pressure_diastolic"]:
+                if key in record and record[key] is not None:
+                    latest_values[key] = record[key]
+        
+        print(f"DEBUG: latest values: {latest_values}")
+        
+        # check each alert
+        triggered_alerts = []
+        
+        for alert in alerts:
+            if not alert.get("enabled", True):
+                continue
+            
+            biomarker_type = alert.get("biomarker_type")
+            condition = alert.get("condition")
+            threshold = alert.get("threshold")
+            
+            if biomarker_type not in latest_values:
+                continue
+            
+            current_value = latest_values[biomarker_type]
+            triggered = False
+            
+            if condition == "greater_than" and current_value > threshold:
+                triggered = True
+            elif condition == "less_than" and current_value < threshold:
+                triggered = True
+            elif condition == "equals" and current_value == threshold:
+                triggered = True
+            
+            if triggered:
+                triggered_alerts.append({
+                    "alert_id": alert.get("alert_id"),
+                    "biomarker_type": biomarker_type,
+                    "condition": condition,
+                    "threshold": threshold,
+                    "current_value": current_value,
+                    "message": alert.get("message", f"{biomarker_type} alert triggered"),
+                    "severity": alert.get("severity", "warning"),
+                    "timestamp": datetime.now().isoformat()
+                })
+        
+        print(f"DEBUG: {len(triggered_alerts)} alerts triggered for user {uid}")
+        
+        return {
+            "user_id": uid,
+            "alerts_triggered": triggered_alerts,
+            "total_alerts_checked": len(alerts),
+            "alerts_configured": len([a for a in alerts if a.get("enabled", True)]),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"DEBUG: error checking alerts: {e}")
+        raise HTTPException(status_code=500, detail=f"failed to check alerts: {e}")
 
 
 @router.get("/summary")

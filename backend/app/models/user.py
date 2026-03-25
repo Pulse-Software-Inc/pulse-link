@@ -39,4 +39,4 @@ class ConsentSettings(BaseModel):
 class DashboardCustomization(BaseModel):
     visible_metrics: List[str] = ["heart_rate", "steps", "calories"]
     theme: str = "default"
-    layout: dict = {}  # TODO: define layout schema
+    layout: dict = {}

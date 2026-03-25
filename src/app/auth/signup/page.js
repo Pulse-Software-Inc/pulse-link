@@ -1,5 +1,5 @@
 'use client';
-
+import UserHeader from "@/components/UserHeader"
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -28,6 +28,7 @@ export default function SignUpPage() {
     }
   };
 
+  {/* API Calls Here */ }
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
@@ -36,14 +37,11 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen justify-center p-4 bg-[linear-gradient(to_bottom_right,#ECB6E6,#D3B5FF,#B2C4FE,#71E4FD)]">
       {/* Logo in top left */}
-      <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
-        <Image src="/PulseLink_logo.svg" alt="PulseLink" width={100} height={100} />
-        <span className="text-white font-bold text-4xl">PulseLink</span>
-      </div>
+      <UserHeader />
 
       {/* Centered Card */}
       <div className="flex items-center justify-center min-h-screen py-20">
-        <div className="w-1/3 min-w-[250px] px-8 py-12 rounded-3xl shadow-xl bg-white my-8">
+        <div className="w-full max-w-md mx-auto px-8 py-12 rounded-3xl shadow-xl bg-white my-8">
           {/* Title */}
           <div className="mb-6 mt-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-1">Sign Up</h1>
@@ -53,31 +51,27 @@ export default function SignUpPage() {
           </div>
 
           {/* Role Toggle */}
-          <div className="mb-6">
-            <div className="bg-gray-100 rounded-xl p-[3px] grid grid-cols-2 gap-1">
-              <button
-                type="button"
-                onClick={() => handleRoleChange(null, 'user')}
-                className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${
-                  formData.role === 'user'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'bg-transparent text-gray-500'
+          <div className=" mb-6 bg-gray-100 rounded-xl p-[3px] grid grid-cols-2 gap-1">
+            <button
+              type="button"
+              onClick={() => handleRoleChange(null, 'user')}
+              className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${formData.role === 'user'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'bg-transparent text-gray-500'
                 }`}
-              >
-                User
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleChange(null, 'professional')}
-                className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${
-                  formData.role === 'professional'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'bg-transparent text-gray-500'
+            >
+              User
+            </button>
+            <button
+              type="button"
+              onClick={() => handleRoleChange(null, 'professional')}
+              className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${formData.role === 'professional'
+                  ? 'bg-white text-gray-800 shadow-sm'
+                  : 'bg-transparent text-gray-500'
                 }`}
-              >
-                Professional
-              </button>
-            </div>
+            >
+              Professional
+            </button>
           </div>
 
           {/* Form */}

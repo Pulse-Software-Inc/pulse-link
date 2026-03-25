@@ -6,7 +6,7 @@ import os
 import logging
 from dotenv import load_dotenv
 
-from app.routers import auth, users, biomarkers, providers
+from app.routers import auth, users, biomarkers, providers, environmental, companion, notifications, emergency, social, appointments, support
 
 load_dotenv()
 
@@ -49,6 +49,13 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(biomarkers.router, prefix="/api/v1")
 app.include_router(providers.router, prefix="/api/v1")
+app.include_router(environmental.router, prefix="/api/v1")
+app.include_router(companion.router, prefix="/api/v1")
+app.include_router(notifications.router, prefix="/api/v1")
+app.include_router(emergency.router, prefix="/api/v1")
+app.include_router(social.router, prefix="/api/v1")
+app.include_router(appointments.router, prefix="/api/v1")
+app.include_router(support.router, prefix="/api/v1")
 
 
 @app.get("/")
