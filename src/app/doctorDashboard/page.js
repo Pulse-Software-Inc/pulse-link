@@ -4,6 +4,7 @@ import DoctorSidebar from '@/components/doctorDB_siderbar';
 import Image from 'next/image';
 import DB_card from '@/components/doctorDB_cards';
 import useDoctorDB_cardsData from '@/components/doctorDB_cardsData';
+import ListOfPatients from '@/components/listOfPatients';
 
 function DoctorDashboard() {
     const { cards, clients, providerName, loading, error } = useDoctorDB_cardsData('/prodata.json');
@@ -39,6 +40,8 @@ function DoctorDashboard() {
                             (cards || []).map((val) => <DB_card key={val.id} val={val} />)
                         )}
                     </div>
+
+                    <ListOfPatients loading={loading} error={error} clients={clients} />
                 </main>
             </div>
         </div>
