@@ -99,6 +99,23 @@
     },
     "data_points": 3
   },
+  "weekly_summary": {
+  "week_start": "2026-02-19",
+  "week_end": "2026-02-25",
+  "daily_steps": [
+    { "date": "2026-02-19", "steps": 8200 },
+    { "date": "2026-02-20", "steps": 10200 },
+    { "date": "2026-02-21", "steps": 7600 },
+    { "date": "2026-02-22", "steps": 12100 },
+    { "date": "2026-02-23", "steps": 9800 },
+    { "date": "2026-02-24", "steps": 15600 },
+    { "date": "2026-02-25", "steps": 11400 }
+  ],
+  "average_steps": 10495,
+  "total_distance_km": 57.3,
+  "active_days": 7
+  },
+   
   "devices": [
     {
       "id": "dev_001",

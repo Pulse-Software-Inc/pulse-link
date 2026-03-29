@@ -50,7 +50,7 @@ export default function useDB_cardsData(
                         id: 'Kcal',
                         title: 'Calories Burned',
                         iconSrc: '/Calories_Icon.svg',
-                        main: totalKcal,
+                        main: Math.round(totalKcal),
                         sub: `/${kcalGoal}`,
                         footer: syncTxt,
                         progress: { value: totalKcal, max: num(kcalGoal, 1) },

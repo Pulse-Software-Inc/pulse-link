@@ -4,6 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import Image from 'next/image';
 import DB_card from '@/components/DB_cards';
 import useDB_cardsData from '@/components/DB_cardsData';
+import WeeklyBarChart from '@/components/WeeklyBarChart';
 
 function UserDashboard() {
     //fetches the data for the cards from public/userdata.json and formats it for the cards.
@@ -46,6 +47,12 @@ function UserDashboard() {
                         ) : (
                             (cards || []).map((val) => <DB_card key={val.id} val={val} />)
                         )}
+                    </div>
+                    <div className="mt-10 grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-8 items-stretch">
+                        <WeeklyBarChart jsonPath="/userdata.json" />
+                        <div className="rounded-2xl border border-transparent bg-white flex items-center justify-center min-h-[320px]">
+                            {/* mascot */}
+                        </div>
                     </div>
                 </main>
             </div>
