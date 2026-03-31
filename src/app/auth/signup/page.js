@@ -5,6 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function SignUpPage() {
+
+  {/* Constant tailwind styling configurations used in Form */ }
+  const boxLabelStyling = 'block text-xs text-gray-500 mb-1'
+  const inputBoxStyling = "w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,13 +27,16 @@ export default function SignUpPage() {
     }));
   };
 
-  const handleRoleChange = (event, newRole) => {
-    if (newRole !== null) {
-      setFormData((prev) => ({ ...prev, role: newRole }));
-    }
+  const handleRoleChange = (newRole) => {
+    setFormData((prev) => ({ ...prev, role: newRole }));
   };
 
-  {/* API Calls Here */ }
+  const returnToggleStyling = (option) => {
+    const styling = (option == formData.role) ? 'bg-white text-gray-800 shadow-sm' : 'bg-transparent text-gray-500'
+    return styling
+  }
+
+  {/* API Calls Here, Come Back On Issue #33*/ }
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
@@ -40,7 +48,7 @@ export default function SignUpPage() {
       <UserHeader />
 
       {/* Centered Card */}
-      <div className="flex items-center justify-center min-h-screen py-20">
+      <main className="flex items-center justify-center min-h-screen py-20">
         <div className="w-full max-w-md mx-auto px-8 py-12 rounded-3xl shadow-xl bg-white my-8">
           {/* Title */}
           <div className="mb-6 mt-4">
@@ -54,21 +62,15 @@ export default function SignUpPage() {
           <div className=" mb-6 bg-gray-100 rounded-xl p-[3px] grid grid-cols-2 gap-1">
             <button
               type="button"
-              onClick={() => handleRoleChange(null, 'user')}
-              className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${formData.role === 'user'
-                  ? 'bg-white text-gray-800 shadow-sm'
-                  : 'bg-transparent text-gray-500'
-                }`}
+              onClick={() => handleRoleChange('user')}
+              className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${returnToggleStyling('user')}`}
             >
               User
             </button>
             <button
               type="button"
-              onClick={() => handleRoleChange(null, 'professional')}
-              className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${formData.role === 'professional'
-                  ? 'bg-white text-gray-800 shadow-sm'
-                  : 'bg-transparent text-gray-500'
-                }`}
+              onClick={() => handleRoleChange('professional')}
+              className={`py-2 px-6 text-sm font-medium rounded-lg transition-all ${returnToggleStyling('professional')}`}
             >
               Professional
             </button>
@@ -79,52 +81,52 @@ export default function SignUpPage() {
             {/* First Name and Last Name Row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">First name</label>
+                <label className={boxLabelStyling}>First name</label>
                 <input
                   type="text"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  className={inputBoxStyling}
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Last name</label>
+                <label className={boxLabelStyling}>Last name</label>
                 <input
                   type="text"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                  className={inputBoxStyling}
                 />
               </div>
             </div>
 
             {/* Email Field */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Email address</label>
+              <label className={boxLabelStyling}>Email address</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                className={inputBoxStyling}
               />
             </div>
 
             {/* Password Field */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Password</label>
+              <label className={boxLabelStyling}>Password</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                className={inputBoxStyling}
               />
             </div>
 
@@ -139,7 +141,7 @@ export default function SignUpPage() {
                 className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
               />
               <label className="text-sm text-gray-700">
-                I accept the Terms and Conditions
+                I Accept The Terms and Conditions
               </label>
             </div>
 
@@ -148,24 +150,22 @@ export default function SignUpPage() {
               type="submit"
               className="w-full py-3 text-sm font-semibold text-white rounded-xl shadow-md mt-2 transition-colors bg-[#D7B2FF] hover:bg-[#C89EFF]"
             >
-              SIGN IN
+              Sign Up
             </button>
           </form>
 
           {/* Login Link */}
-          <div className="text-center mt-6 mb-4">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link
-                href="/auth/login"
-                className="text-[#EBD8FF] font-medium hover:text-[#D7B2FF]"
-              >
-                Login
-              </Link>
-            </p>
-          </div>
+          <p className="text-center mt-6 mb-4 text-sm text-gray-600">
+            Already have an account?
+            <Link
+              href="/auth/login"
+              className="text-[#EBD8FF] font-medium hover:text-[#D7B2FF]"
+            >
+              {' Login'}
+            </Link>
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
