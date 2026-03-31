@@ -1,5 +1,6 @@
 'use client';
 
+import FormButton from "@/components/basics/FormButton"
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -7,15 +8,17 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: '',
+    acceptTerms: false,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle login logic here
-    console.log('Login attempt:', { email, password, acceptTerms });
-    // Only redirects when login is successful 
+    console.log('Login attempt:', {loginData});
+    // Only redirects when login is successful
     router.push('/userdashboard');
   };
 
@@ -23,10 +26,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* Logo in top left - consistent with signup page */}
       <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
-        <Image 
-          src="/PulseLink_logo.svg" 
-          alt="PulseLink Logo" 
-          width={100} 
+        <Image
+          src="/PulseLink_logo.svg"
+          alt="PulseLink Logo"
+          width={100}
           height={100}
         />
         <span className="text-white text-4xl">PulseLink</span>
@@ -50,7 +53,7 @@ export default function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div className="flex-1 flex items-center justify-center bg-white p-8">
-        <div className="w-full max-w-xl -ml-24">
+        <div className="w-full max-w-xl">
           <div className="mb-8">
             <h2 className="text-3xl font-normal text-gray-800 mb-2">
               Login to your Account
@@ -67,7 +70,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 id="email"
-                value={email}
+                value={loginData.email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@gmail.com"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
@@ -83,7 +86,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 id="password"
-                value={password}
+                value={loginData.password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
@@ -96,7 +99,7 @@ export default function LoginPage() {
               <input
                 type="checkbox"
                 id="terms"
-                checked={acceptTerms}
+                checked={loginData.acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
                 className="w-4 h-4 border-2 border-gray-300 rounded focus:ring-2 focus:ring-purple-400"
               />
@@ -106,18 +109,13 @@ export default function LoginPage() {
             </div>
 
             {/* Login Button */}
-            <button
-              type="submit"
-              className="w-full bg-[#D7B2FF] text-white py-3 rounded-lg font-medium hover:bg-[#C89EFF] transition-all duration-200 shadow-md"
-            >
-              LOGIN
-            </button>
+            <FormButton text='Log In' />
 
             {/* Create Account Link */}
             <p className="text-center text-sm text-gray-600 mt-6">
-              New to PulseLink?{' '}
+              New to PulseLink?
               <Link href="/auth/signup" className="text-[#D7B2FF] font-medium">
-                Create an Account
+                {' Create an Account'}
               </Link>
             </p>
           </form>

@@ -1,5 +1,6 @@
 'use client';
 import UserHeader from "@/components/basics/UserHeader"
+import FormButton from "@/components/basics/FormButton"
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -146,13 +147,9 @@ export default function SignUpPage() {
             </div>
 
             {/* Sign Up Button */}
-            <button
-              type="submit"
-              className="w-full py-3 text-sm font-semibold text-white rounded-xl shadow-md mt-2 transition-colors bg-[#D7B2FF] hover:bg-[#C89EFF]"
-            >
-              Sign Up
-            </button>
+            <FormButton text='Sign Up' />
           </form>
+
 
           {/* Login Link */}
           <p className="text-center mt-6 mb-4 text-sm text-gray-600">
