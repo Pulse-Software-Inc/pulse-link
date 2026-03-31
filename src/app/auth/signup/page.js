@@ -1,5 +1,5 @@
 'use client';
-import UserHeader from "@/components/UserHeader"
+import UserHeader from "@/components/basics/UserHeader"
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
