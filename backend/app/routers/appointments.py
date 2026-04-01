@@ -71,7 +71,7 @@ async def create_appointment(
         if not appt_id:
             raise HTTPException(status_code=500, detail="failed to create appointment")
         
-        # create in-app reminder notification for the patient
+        # create in app reminder notification for the patient
         reminder_msg = f"Appointment scheduled with your provider at {scheduled_for}"
         create_notification_internal(
             user_id=patient_id,

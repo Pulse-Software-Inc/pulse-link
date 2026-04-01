@@ -8,6 +8,7 @@ import io
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from app.core.security import get_current_user, require_role
+from app.routers.notifications import create_notification_internal
 
 # try to import reportlab for pdf generation
 try:
@@ -33,6 +34,8 @@ async def get_patients(current_user: dict = Depends(require_role("healthcare_pro
         
         patients = []
         for pid in patient_ids:
+            if not firestore.can_provider_access_patient(provider_id, pid):
+                continue
             patient = firestore.get_user(pid) or {"uid": pid}
             patients.append({
                 "uid": pid,
@@ -56,8 +59,67 @@ async def get_patient_data(
     patient_id: str, 
     current_user: dict = Depends(require_role("healthcare_provider"))
 ):
-    # not implemented yet
-    raise HTTPException(status_code=501, detail="Patient data endpoint not ready")
+    from app.core import firestore
+
+    if not current_user.get("mfa_verified", False):
+        raise HTTPException(status_code=403, detail="MFA verification required")
+
+    patient = firestore.get_user(patient_id)
+    if not patient:
+        raise HTTPException(status_code=404, detail="patient not found")
+
+    if not firestore.can_provider_access_patient(current_user["uid"], patient_id):
+        raise HTTPException(status_code=403, detail="provider does not have access to this patient")
+
+    firestore.create_audit_log(
+        user_id=current_user["uid"],
+        target_user_id=patient_id,
+        action="view_patient_data",
+        category="data_access",
+        status="success",
+    )
+
+    recent_biomarkers = firestore.get_recent_biomarkers(patient_id, limit=10)
+    all_biomarkers = firestore.get_all_biomarkers(patient_id)
+    devices = firestore.get_user_devices(patient_id)
+    manual_entries = firestore.get_manual_entries(patient_id)
+    consent = firestore.get_consent_settings(patient_id)
+
+    total_steps = sum(r.get("steps", 0) or 0 for r in all_biomarkers)
+    total_calories = sum(r.get("calories", 0) or 0 for r in all_biomarkers)
+    heart_rates = [r.get("heart_rate") for r in all_biomarkers if r.get("heart_rate")]
+    avg_heart_rate = sum(heart_rates) // len(heart_rates) if heart_rates else 0
+
+    provider_alerts = [
+        alert for alert in firestore.get_patient_alerts(current_user["uid"])
+        if alert.get("patient_id") == patient_id
+    ]
+
+    return {
+        "provider_id": current_user["uid"],
+        "patient": {
+            "uid": patient.get("uid", patient_id),
+            "email": patient.get("email"),
+            "age": patient.get("age"),
+            "gender": patient.get("gender"),
+            "language": patient.get("language"),
+        },
+        "consent": {
+            "share_with_healthcare_providers": consent.get("share_with_healthcare_providers", False)
+        },
+        "summary": {
+            "records_found": len(all_biomarkers),
+            "total_steps": total_steps,
+            "total_calories": total_calories,
+            "avg_heart_rate": avg_heart_rate,
+            "devices_connected": len(devices),
+            "manual_entries": len(manual_entries),
+        },
+        "recent_biomarkers": recent_biomarkers,
+        "devices": devices,
+        "manual_entries": manual_entries,
+        "provider_alerts": provider_alerts,
+    }
 
 
 @router.post("/alerts")
@@ -69,6 +131,16 @@ async def set_patient_alert(
     from app.core import firestore
     try:
         provider_id = current_user["uid"]
+
+        if not current_user.get("mfa_verified", False):
+            raise HTTPException(status_code=403, detail="MFA verification required")
+
+        patient = firestore.get_user(patient_id)
+        if not patient:
+            raise HTTPException(status_code=404, detail="patient not found")
+
+        if not firestore.can_provider_access_patient(provider_id, patient_id):
+            raise HTTPException(status_code=403, detail="provider does not have access to this patient")
         
         # basic validation
         required = ["biomarker_type", "condition", "threshold"]
@@ -92,10 +164,34 @@ async def set_patient_alert(
         alert_id = firestore.add_patient_alert(provider_id, alert)
         if not alert_id:
             raise HTTPException(status_code=500, detail="failed to save alert")
-        
-        # make sure patient is linked to provider
-        firestore.add_patient_to_provider(provider_id, patient_id)
-        
+
+        message = alert_config.get("message", "")
+        if not message:
+            message = f"Your provider set an alert for {alert_config['biomarker_type']}"
+
+        create_notification_internal(
+            user_id=patient_id,
+            title="Provider Alert",
+            message=message,
+            notification_type="provider_alert",
+            data={
+                "alert_id": alert_id,
+                "provider_id": provider_id,
+                "biomarker_type": alert_config["biomarker_type"],
+                "condition": alert_config["condition"],
+                "threshold": alert_config["threshold"],
+            }
+        )
+
+        firestore.create_audit_log(
+            user_id=provider_id,
+            target_user_id=patient_id,
+            action="set_provider_alert",
+            category="sharing",
+            status="success",
+            details={"alert_id": alert_id},
+        )
+
         return {
             "provider_id": provider_id,
             "patient_id": patient_id,
@@ -143,11 +239,25 @@ async def export_patient_pdf(
     
     try:
         provider_id = current_user["uid"]
+
+        if not current_user.get("mfa_verified", False):
+            raise HTTPException(status_code=403, detail="MFA verification required")
         
         # get patient data
         patient = firestore.get_user(patient_id)
         if not patient:
             raise HTTPException(status_code=404, detail="patient not found")
+
+        if not firestore.can_provider_access_patient(provider_id, patient_id):
+            raise HTTPException(status_code=403, detail="provider does not have access to this patient")
+
+        firestore.create_audit_log(
+            user_id=provider_id,
+            target_user_id=patient_id,
+            action="export_patient_pdf",
+            category="data_access",
+            status="success",
+        )
         
         # get patient's biomarker data
         biomarkers = firestore.get_all_biomarkers(patient_id)

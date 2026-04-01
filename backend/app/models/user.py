@@ -1,10 +1,10 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str
     password: str
     age: Optional[int] = None
     gender: Optional[str] = None
@@ -13,7 +13,7 @@ class UserCreate(BaseModel):
 
 class UserProfile(BaseModel):
     uid: str
-    email: EmailStr
+    email: str
     age: Optional[int] = None
     gender: Optional[str] = None
     language: str = "en"

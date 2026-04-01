@@ -14,7 +14,7 @@ from app.core.security import get_current_user
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 # notifications are stored in firestore, not sent as push
-# this is for in-app notification center
+# this is for in app notification center
 
 @router.get("/")
 async def get_notifications(
@@ -176,6 +176,63 @@ async def get_notification_summary(current_user: dict = Depends(get_current_user
         raise HTTPException(status_code=500, detail="failed to get summary")
 
 
+@router.get("/preferences")
+async def get_notification_preferences(current_user: dict = Depends(get_current_user)):
+    from app.core import firestore
+
+    try:
+        settings = firestore.get_notification_settings(current_user["uid"])
+        return {
+            "user_id": current_user["uid"],
+            "preferences": settings
+        }
+    except Exception as e:
+        print(f"DEBUG: get notification preferences error: {e}")
+        raise HTTPException(status_code=500, detail="failed to fetch notification preferences")
+
+
+@router.put("/preferences")
+async def update_notification_preferences(
+    settings: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    from app.core import firestore
+
+    try:
+        allowed = {
+            "mute_all",
+            "general",
+            "appointment",
+            "provider_alert",
+            "emergency",
+            "companion",
+            "daily_summary",
+            "health_alert",
+            "quiet_hours_start",
+            "quiet_hours_end",
+        }
+        clean_settings = {k: v for k, v in settings.items() if k in allowed}
+
+        if not clean_settings:
+            raise HTTPException(status_code=400, detail="no valid notification settings")
+
+        success = firestore.update_notification_settings(current_user["uid"], clean_settings)
+        if not success:
+            raise HTTPException(status_code=500, detail="failed to save notification preferences")
+
+        updated = firestore.get_notification_settings(current_user["uid"])
+        return {
+            "user_id": current_user["uid"],
+            "message": "notification preferences updated",
+            "preferences": updated
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"DEBUG: update notification preferences error: {e}")
+        raise HTTPException(status_code=500, detail="failed to update notification preferences")
+
+
 # internal endpoint to create notification (called by other services)
 def create_notification_internal(
     user_id: str,
@@ -188,6 +245,14 @@ def create_notification_internal(
     from app.core import firestore
     
     try:
+        settings = firestore.get_notification_settings(user_id)
+
+        if settings.get("mute_all", False):
+            return ""
+
+        if notification_type in settings and not settings.get(notification_type, True):
+            return ""
+
         notification = {
             "user_id": user_id,
             "title": title,

@@ -23,7 +23,7 @@ def test_companion():
         else:
             print(f"error: {resp.text}")
         
-        # 2. test chat - greeting
+        # 2. test chat with greeting
         print("\n--- 2. POST /companion/chat (greeting) ---")
         resp2 = requests.post(
             f"{BASE_URL}/api/v1/companion/chat",
@@ -36,7 +36,7 @@ def test_companion():
             print(f"user: {data2.get('message')}")
             print(f"companion: {data2.get('response')}")
         
-        # 3. test chat - steps question
+        # 3. test chat with steps question
         print("\n--- 3. POST /companion/chat (steps) ---")
         resp3 = requests.post(
             f"{BASE_URL}/api/v1/companion/chat",
@@ -49,7 +49,7 @@ def test_companion():
             print(f"response: {data3.get('response')[:100]}...")
             print(f"suggestions: {data3.get('suggestions')}")
         
-        # 4. test chat - heart rate
+        # 4. test chat with heart rate
         print("\n--- 4. POST /companion/chat (heart rate) ---")
         resp4 = requests.post(
             f"{BASE_URL}/api/v1/companion/chat",

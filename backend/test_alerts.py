@@ -21,7 +21,7 @@ def test_alerts():
         else:
             print(f"error: {resp.text}")
         
-        # 2. create an alert - heart rate > 120
+        # 2. create an alert for heart rate > 120
         print("\n--- 2. POST /users/me/alerts (heart_rate > 120) ---")
         alert_data = {
             "biomarker_type": "heart_rate",
@@ -40,7 +40,7 @@ def test_alerts():
             print(f"error: {resp2.text}")
             alert_id = None
         
-        # 3. create another alert - steps < 5000
+        # 3. create another alert for steps < 5000
         print("\n--- 3. POST /users/me/alerts (steps < 5000) ---")
         alert_data2 = {
             "biomarker_type": "steps",

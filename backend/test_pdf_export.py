@@ -7,7 +7,7 @@ import os
 BASE_URL = "http://localhost:8000"
 
 def test_pdf_export():
-    # use mock token - need to use provider role
+    # use mock token and use provider role
     token = "mock_provider_token"
     headers = {"Authorization": f"Bearer {token}"}
     
@@ -44,7 +44,7 @@ def test_pdf_export():
         )
         print(f"status: {resp2.status_code}")
         
-        # test non-existent patient
+        # test missing patient
         print("\n--- GET /providers/patients/nonexistent/export (should 404) ---")
         resp3 = requests.get(
             f"{BASE_URL}/api/v1/providers/patients/nonexistent/export",
@@ -53,7 +53,7 @@ def test_pdf_export():
         print(f"status: {resp3.status_code}")
         print(f"response: {resp3.text[:100] if resp3.text else 'empty'}")
         
-        # test with regular user token (should fail - needs provider role)
+        # test with regular user token and it should fail because it needs provider role
         print("\n--- GET /providers/patients/user123/export with user token (should 403) ---")
         user_headers = {"Authorization": "Bearer mock_user_token"}
         resp4 = requests.get(

@@ -26,7 +26,15 @@ src/amin-testing
 
 # misc
 .DS_Store
+__pycache__/
+*.pyc
 *.pem
+*.json:Zone.Identifier
+*firebase-adminsdk*.json
+*firebase-service-account*.json
+backend/.local-secrets/
+backend/backups/
+backend/logs/
 
 # debug
 npm-debug.log*

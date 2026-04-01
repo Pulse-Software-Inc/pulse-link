@@ -10,6 +10,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from app.core.security import get_current_user
+from app.routers.notifications import create_notification_internal
 
 router = APIRouter(prefix="/emergency", tags=["emergency contacts"])
 
@@ -210,19 +211,16 @@ async def trigger_emergency_alert(
             else:
                 print(f"DEBUG: contact {contact.get('name')} has no email; in-app log only")
         
-        # create notification for user
-        firestore.create_notification({
-            "user_id": uid,
-            "title": "Emergency Alert Sent",
-            "message": f"alert sent to {len(notified_contacts)} emergency contacts",
-            "type": "emergency",
-            "read": False,
-            "data": {
+        create_notification_internal(
+            user_id=uid,
+            title="Emergency Alert Sent",
+            message=f"alert sent to {len(notified_contacts)} emergency contacts",
+            notification_type="emergency",
+            data={
                 "alert_type": alert_type,
                 "contacts_notified": len(notified_contacts)
-            },
-            "created_at": datetime.now().isoformat()
-        })
+            }
+        )
         
         return {
             "user_id": uid,
