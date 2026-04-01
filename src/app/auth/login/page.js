@@ -19,7 +19,7 @@ export default function LoginPage() {
     // Handle login logic here
     console.log('Login attempt:', {loginData});
     // Only redirects when login is successful
-    router.push('/userdashboard');
+    router.push('/main/prof-dashboard');
   };
 
   return (
