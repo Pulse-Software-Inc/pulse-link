@@ -6,12 +6,12 @@ const doctorSidebarData = [
     {
         title: "Dashboard",
         icon: <Image src="/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
-        link: "/doctorDashboard"
+        link: "/main/prof-dashboard"
     },
     {
         title: "Settings",
         icon: <Image src="/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
-        link: "/Settings_Doc"
+        link: "/util/prof-settings"
     },
 ];
 

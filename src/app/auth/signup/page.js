@@ -4,8 +4,11 @@ import FormButton from "@/components/basics/FormButton"
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
+
+    const router = useRouter();
 
   {/* Constant tailwind styling configurations used in Form */ }
   const boxLabelStyling = 'block text-xs text-gray-500 mb-1'
@@ -41,6 +44,8 @@ export default function SignUpPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
+    router.push('/auth/login');
+
   };
 
   return (

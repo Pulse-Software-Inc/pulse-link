@@ -17,9 +17,9 @@ export default function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle login logic here
-    console.log('Login attempt:', {loginData});
+    console.log(e);
     // Only redirects when login is successful
-    router.push('/main/prof-dashboard');
+    e.target[0].value == 'user@gmail.com' ? router.push('/main/user-dashboard') : router.push('/main/prof-dashboard');
   };
 
   return (
