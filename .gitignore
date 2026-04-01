@@ -4,6 +4,10 @@
 # Amr Playground For Components
 src/amr-testing
 src/amin-testing
+
+#
+src/server/app/__pycache__
+
 # dependencies
 /node_modules
 /.pnp
