@@ -3,10 +3,11 @@ from typing import Dict, List
 import sys
 import os
 from datetime import datetime
+import firebase_admin.auth as firebase_auth
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_mfa
 from app.models.user import UserUpdate, ConsentSettings
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -41,17 +42,54 @@ async def get_user_profile(request: Request, current_user: dict = Depends(get_cu
 async def update_user_profile(request: Request, profile_update: UserUpdate, current_user: dict = Depends(get_current_user)):
     from app.core import firestore
     
-    updates = profile_update.dict(exclude_unset=True)
+    updates = profile_update.model_dump(exclude_unset=True)
     
     # update the user
     updated = firestore.update_user(current_user["uid"], updates)
     
     if not updated:
         raise HTTPException(status_code=404, detail="Failed to update user")
+
+    firestore.create_audit_log(
+        user_id=current_user["uid"],
+        action="update_profile",
+        category="general",
+        status="success",
+        details={"fields": list(updates.keys())},
+    )
     
     # fetch updated user
     updated_user = firestore.get_user(current_user["uid"])
     return {"message": "Profile updated", "user": updated_user}
+
+
+@router.delete("/me")
+async def delete_my_account(current_user: dict = Depends(require_mfa())):
+    from app.core import firestore
+
+    uid = current_user["uid"]
+    firestore.create_audit_log(
+        user_id=uid,
+        action="delete_account",
+        category="security",
+        status="success",
+    )
+    deleted = firestore.delete_user_account(uid)
+
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete account data")
+
+    if os.getenv("USE_MOCK", "false").lower() != "true":
+        try:
+            firebase_auth.delete_user(uid)
+        except Exception as e:
+            print(f"DEBUG: firebase delete failed: {e}")
+            raise HTTPException(status_code=500, detail="Firestore data deleted but auth delete failed")
+
+    return {
+        "user_id": uid,
+        "message": "Account and data deleted"
+    }
 
 
 @router.get("/me/consent")
@@ -66,9 +104,16 @@ async def get_consent_settings(request: Request, current_user: dict = Depends(ge
 async def update_consent_settings(request: Request, consent: ConsentSettings, current_user: dict = Depends(get_current_user)):
     from app.core import firestore
     
-    success = firestore.update_consent_settings(current_user["uid"], consent.dict())
+    success = firestore.update_consent_settings(current_user["uid"], consent.model_dump())
     
     if success:
+        firestore.create_audit_log(
+            user_id=current_user["uid"],
+            action="update_consent",
+            category="sharing",
+            status="success",
+            details=consent.model_dump(),
+        )
         return {
             "user_id": current_user["uid"], 
             "message": "Consent updated", 
@@ -78,7 +123,7 @@ async def update_consent_settings(request: Request, consent: ConsentSettings, cu
         raise HTTPException(status_code=500, detail="Failed to update consent")
 
 
-# --- third-party provider linking (google/apple/facebook) ---
+# third party provider linking for google apple and facebook
 
 @router.get("/me/providers")
 async def get_linked_providers(current_user: dict = Depends(get_current_user)):
@@ -114,6 +159,14 @@ async def link_provider_account(payload: dict, current_user: dict = Depends(get_
         link_id = firestore.add_provider_link(uid, link_data)
         if not link_id:
             raise HTTPException(status_code=500, detail="failed to link provider")
+
+        firestore.create_audit_log(
+            user_id=uid,
+            action="link_provider",
+            category="sharing",
+            status="success",
+            details={"provider": provider, "link_id": link_id},
+        )
         
         return {"user_id": uid, "link_id": link_id, "message": "provider linked", "provider": provider}
     except HTTPException:
@@ -131,6 +184,13 @@ async def remove_provider_link(link_id: str, current_user: dict = Depends(get_cu
         success = firestore.delete_provider_link(link_id)
         if not success:
             raise HTTPException(status_code=404, detail="link not found")
+        firestore.create_audit_log(
+            user_id=current_user["uid"],
+            action="unlink_provider",
+            category="sharing",
+            status="success",
+            details={"link_id": link_id},
+        )
         return {"user_id": current_user["uid"], "link_id": link_id, "message": "provider unlinked"}
     except HTTPException:
         raise
@@ -139,7 +199,7 @@ async def remove_provider_link(link_id: str, current_user: dict = Depends(get_cu
         raise HTTPException(status_code=500, detail="failed to unlink provider")
 
 
-# --- custom alerts endpoints ---
+# custom alerts endpoints
 
 @router.get("/me/alerts")
 async def get_user_alerts(request: Request, current_user: dict = Depends(get_current_user)):
@@ -243,3 +303,41 @@ async def delete_alert(
     except Exception as e:
         print(f"DEBUG: error deleting alert: {e}")
         raise HTTPException(status_code=500, detail=f"failed to delete alert: {e}")
+
+
+@router.get("/me/audit-logs")
+async def get_my_audit_logs(
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    from app.core import firestore
+
+    try:
+        logs = firestore.get_audit_logs(current_user["uid"], limit=limit)
+        return {
+            "user_id": current_user["uid"],
+            "logs": logs,
+            "count": len(logs)
+        }
+    except Exception as e:
+        print(f"DEBUG: get audit logs error: {e}")
+        raise HTTPException(status_code=500, detail="failed to fetch audit logs")
+
+
+@router.get("/me/access-logs")
+async def get_my_access_logs(
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    from app.core import firestore
+
+    try:
+        logs = firestore.get_access_logs(current_user["uid"], limit=limit)
+        return {
+            "user_id": current_user["uid"],
+            "logs": logs,
+            "count": len(logs)
+        }
+    except Exception as e:
+        print(f"DEBUG: get access logs error: {e}")
+        raise HTTPException(status_code=500, detail="failed to fetch access logs")

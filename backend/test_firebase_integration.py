@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# test firebase integration - make sure firebase is connected
+# test firebase integration and make sure firebase is connected
 
 import sys
 import os

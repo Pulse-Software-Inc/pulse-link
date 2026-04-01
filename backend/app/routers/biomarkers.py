@@ -12,6 +12,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from app.core.security import get_current_user
 from app.models.biomarker import ManualDataEntry
 
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+
 router = APIRouter(prefix="/biomarkers", tags=["biomarkers"])
 
 
@@ -42,6 +51,103 @@ async def get_connected_devices(
         raise HTTPException(status_code=500, detail=f"Failed to get devices: {e}")
 
 
+@router.post("/devices")
+async def add_device(
+    request: Request,
+    device: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    from app.core import firestore
+
+    try:
+        if not device.get("device_name"):
+            raise HTTPException(status_code=400, detail="device_name is required")
+        if not device.get("device_type"):
+            raise HTTPException(status_code=400, detail="device_type is required")
+
+        device_data = {
+            "device_name": device.get("device_name"),
+            "device_type": device.get("device_type"),
+            "brand": device.get("brand", ""),
+            "is_active": device.get("is_active", True),
+            "last_sync": device.get("last_sync", datetime.now().isoformat()),
+        }
+
+        device_id = firestore.add_device(current_user["uid"], device_data)
+        if not device_id:
+            raise HTTPException(status_code=500, detail="failed to add device")
+
+        device_data["device_id"] = device_id
+        return {
+            "user_id": current_user["uid"],
+            "device_id": device_id,
+            "message": "device added",
+            "device": device_data,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add device: {e}")
+
+
+@router.put("/devices/{device_id}")
+async def update_device(
+    request: Request,
+    device_id: str,
+    updates: dict,
+    current_user: dict = Depends(get_current_user)
+):
+    from app.core import firestore
+
+    try:
+        if not updates:
+            raise HTTPException(status_code=400, detail="no updates provided")
+
+        allowed_fields = ["device_name", "device_type", "brand", "is_active", "last_sync"]
+        clean_updates = {key: value for key, value in updates.items() if key in allowed_fields}
+
+        if not clean_updates:
+            raise HTTPException(status_code=400, detail="no valid fields to update")
+
+        success = firestore.update_device(current_user["uid"], device_id, clean_updates)
+        if not success:
+            raise HTTPException(status_code=404, detail="device not found")
+
+        return {
+            "user_id": current_user["uid"],
+            "device_id": device_id,
+            "message": "device updated",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update device: {e}")
+
+
+@router.delete("/devices/{device_id}")
+async def delete_device(
+    request: Request,
+    device_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    from app.core import firestore
+
+    try:
+        success = firestore.delete_device(current_user["uid"], device_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="device not found")
+
+        return {
+            "user_id": current_user["uid"],
+            "device_id": device_id,
+            "message": "device removed",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to remove device: {e}")
+
+
 @router.post("/manual")
 async def add_manual_data(
     request: Request, data: ManualDataEntry, current_user: dict = Depends(get_current_user)
@@ -49,7 +155,7 @@ async def add_manual_data(
     from app.core import firestore
     
     try:
-        entry_dict = data.dict()
+        entry_dict = data.model_dump()
         entry_id = firestore.add_manual_entry(current_user["uid"], entry_dict)
         
         # fetch the entry we just created
@@ -479,7 +585,7 @@ async def get_dashboard_summary(
         # fetch user devices
         devices = firestore.get_user_devices(uid)
         
-        # calculate totals - sum for weekly/monthly, max for daily
+        # calculate totals using sum for weekly or monthly and max for daily
         total_steps = 0
         total_calories = 0
         heart_rates = []
@@ -601,7 +707,7 @@ async def export_biomarkers(
     format: str = "csv",
     current_user: dict = Depends(get_current_user),
 ):
-    # export biomarker data to csv (pdf coming later)
+    # export biomarker data to csv or pdf
     from app.core import firestore
     
     try:
@@ -652,9 +758,96 @@ async def export_biomarkers(
                 }
             )
         
+        if format.lower() == "pdf":
+            if not REPORTLAB_AVAILABLE:
+                raise HTTPException(status_code=501, detail="pdf generation not available")
+
+            user = firestore.get_user(uid) or {}
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter)
+            elements = []
+
+            styles = getSampleStyleSheet()
+            title_style = styles["Heading1"]
+            heading_style = styles["Heading2"]
+            normal_style = styles["Normal"]
+
+            elements.append(Paragraph("PulseLink Biomarker Report", title_style))
+            elements.append(Spacer(1, 20))
+
+            elements.append(Paragraph("User Information", heading_style))
+            elements.append(Paragraph(f"Email: {user.get('email', 'N/A')}", normal_style))
+            elements.append(Paragraph(f"User ID: {uid}", normal_style))
+            elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", normal_style))
+            elements.append(Spacer(1, 20))
+
+            total_steps = sum(r.get("steps", 0) or 0 for r in biomarkers)
+            total_calories = sum(r.get("calories", 0) or 0 for r in biomarkers)
+            heart_rates = [r.get("heart_rate") for r in biomarkers if r.get("heart_rate")]
+            avg_hr = sum(heart_rates) // len(heart_rates) if heart_rates else 0
+
+            elements.append(Paragraph("Summary", heading_style))
+            summary_data = [
+                ["Metric", "Total/Average"],
+                ["Records", str(len(biomarkers))],
+                ["Total Steps", f"{total_steps:,}"],
+                ["Total Calories", f"{total_calories:.1f}"],
+                ["Avg Heart Rate", f"{avg_hr} BPM"],
+            ]
+
+            summary_table = Table(summary_data)
+            summary_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(summary_table)
+            elements.append(Spacer(1, 20))
+
+            table_data = [["Timestamp", "Heart Rate", "Steps", "Calories", "Device"]]
+            for record in biomarkers[:50]:
+                table_data.append([
+                    record.get("timestamp", "")[:16],
+                    str(record.get("heart_rate", "-")),
+                    str(record.get("steps", "-")),
+                    str(record.get("calories", "-")),
+                    record.get("device_id", record.get("source", "-"))[:15]
+                ])
+
+            elements.append(Paragraph("Detailed Records", heading_style))
+            details_table = Table(table_data)
+            details_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 10),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(details_table)
+
+            doc.build(elements)
+            pdf_content = buffer.getvalue()
+            buffer.close()
+
+            filename = f"biomarkers_{uid}_{datetime.now().strftime('%Y%m%d')}.pdf"
+            return Response(
+                content=pdf_content,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}"
+                }
+            )
+        
         else:
             raise HTTPException(status_code=400, detail=f"unsupported format: {format}")
             
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"DEBUG: export error: {e}")
         raise HTTPException(status_code=500, detail=f"export failed: {e}")

@@ -58,7 +58,7 @@ def test_notifications():
         if resp4.status_code == 200:
             print(f"marked as read: {resp4.json().get('marked_as_read')}")
         
-        # 5. get unread only (should be empty after read-all)
+        # 5. get unread only and it should be empty after read all
         print("\n--- 5. GET /notifications?unread_only=true ---")
         resp5 = requests.get(f"{BASE_URL}/api/v1/notifications?unread_only=true", headers=headers)
         print(f"status: {resp5.status_code}")

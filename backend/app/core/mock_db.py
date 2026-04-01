@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+import hashlib
 import uuid
 
 class MockDB:
@@ -15,6 +16,11 @@ class MockDB:
         self.appointments: Dict[str, List[Dict[str, Any]]] = {}
         self.support_tickets: Dict[str, List[Dict[str, Any]]] = {}
         self.patient_alerts: Dict[str, List[Dict[str, Any]]] = {}
+        self.notifications: Dict[str, List[Dict[str, Any]]] = {}
+        self.alerts: Dict[str, List[Dict[str, Any]]] = {}
+        self.emergency_contacts: Dict[str, List[Dict[str, Any]]] = {}
+        self.mfa_state: Dict[str, Dict[str, Any]] = {}
+        self.audit_logs: List[Dict[str, Any]] = []
         self._seed_sample_data()
     
     def _seed_sample_data(self):
@@ -27,7 +33,9 @@ class MockDB:
             "language": "en",
             "emergency_contacts": [{"name": "John Doe", "phone": "+971501234567"}],
             "created_at": "2025-01-20T10:00:00",
-            "updated_at": "2025-01-26T14:30:00"
+            "updated_at": "2025-01-26T14:30:00",
+            "password_updated_at": "2025-01-20T10:00:00",
+            "password_expires_at": "2027-04-20T10:00:00"
         }
         
         self.devices["user123"] = [
@@ -154,6 +162,22 @@ class MockDB:
         device_data["last_sync"] = datetime.now().isoformat()
         self.devices[user_id].append(device_data)
         return device_id
+
+    def update_device(self, user_id: str, device_id: str, updates: Dict[str, Any]) -> bool:
+        for device in self.devices.get(user_id, []):
+            if device.get("device_id") == device_id:
+                device.update(updates)
+                device["updated_at"] = datetime.now().isoformat()
+                return True
+        return False
+
+    def delete_device(self, user_id: str, device_id: str) -> bool:
+        devices = self.devices.get(user_id, [])
+        for i, device in enumerate(devices):
+            if device.get("device_id") == device_id:
+                devices.pop(i)
+                return True
+        return False
     
     def get_manual_entries(self, user_id: str) -> List[Dict[str, Any]]:
         return self.manual_entries.get(user_id, [])
@@ -251,5 +275,139 @@ class MockDB:
     
     def get_patient_alerts(self, provider_id: str) -> List[Dict[str, Any]]:
         return self.patient_alerts.get(provider_id, [])
+
+    def save_mfa_code(self, user_id: str, code: str, expires_at: str) -> bool:
+        self.mfa_state[user_id] = {
+            "code_hash": hashlib.sha256(code.encode()).hexdigest(),
+            "expires_at": expires_at,
+            "verified": False,
+            "verified_at": None,
+            "verified_until": None,
+            "delivery_method": "in_app",
+        }
+        return True
+
+    def verify_mfa_code(self, user_id: str, code: str, verified_until: str) -> bool:
+        state = self.mfa_state.get(user_id)
+        if not state:
+            return False
+        if state.get("code_hash") != hashlib.sha256(code.encode()).hexdigest():
+            return False
+        if state.get("expires_at") and state["expires_at"] < datetime.now().isoformat():
+            return False
+        state["verified"] = True
+        state["verified_at"] = datetime.now().isoformat()
+        state["verified_until"] = verified_until
+        return True
+
+    def get_mfa_status(self, user_id: str) -> Dict[str, Any]:
+        state = self.mfa_state.get(user_id, {})
+        verified_until = state.get("verified_until")
+        verified = False
+        if verified_until and verified_until > datetime.now().isoformat():
+            verified = True
+        return {
+            "verified": verified,
+            "verified_until": verified_until,
+            "expires_at": state.get("expires_at"),
+            "has_pending_code": bool(state.get("code_hash")) and not verified,
+            "delivery_method": state.get("delivery_method", "in_app"),
+        }
+
+    def clear_mfa_state(self, user_id: str) -> bool:
+        self.mfa_state.pop(user_id, None)
+        return True
+
+    def add_audit_log(self, log_data: Dict[str, Any]) -> str:
+        log_id = f"audit_{uuid.uuid4().hex[:8]}"
+        entry = log_data.copy()
+        entry["audit_id"] = log_id
+        self.audit_logs.append(entry)
+        return log_id
+
+    def get_audit_logs(self, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        rows = [
+            log for log in self.audit_logs
+            if log.get("user_id") == user_id or log.get("target_user_id") == user_id
+        ]
+        rows.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return rows[:limit]
+
+    def get_access_logs(self, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        rows = []
+        for log in self.audit_logs:
+            category = log.get("category", "")
+            if category not in ["data_access", "sharing"]:
+                continue
+            if log.get("user_id") == user_id or log.get("target_user_id") == user_id:
+                rows.append(log)
+        rows.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return rows[:limit]
+
+    def get_password_status(self, user_id: str) -> Dict[str, Any]:
+        user = self.users.get(user_id, {})
+        expires_at = user.get("password_expires_at")
+
+        if not expires_at:
+            base = user.get("password_updated_at") or user.get("created_at")
+            if base:
+                try:
+                    expires_at = (datetime.fromisoformat(base) + timedelta(days=90)).isoformat()
+                except Exception:
+                    expires_at = None
+
+        expired = False
+        if expires_at:
+            expired = expires_at < datetime.now().isoformat()
+
+        return {
+            "password_updated_at": user.get("password_updated_at"),
+            "password_expires_at": expires_at,
+            "expired": expired,
+        }
+
+    def mark_password_changed(self, user_id: str, days_until_expiry: int = 90) -> bool:
+        if user_id not in self.users:
+            return False
+        now = datetime.now().isoformat()
+        expires_at = (datetime.now() + timedelta(days=days_until_expiry)).isoformat()
+        self.users[user_id]["password_updated_at"] = now
+        self.users[user_id]["password_expires_at"] = expires_at
+        self.users[user_id]["updated_at"] = now
+        return True
+
+    def delete_account(self, user_id: str) -> bool:
+        self.users.pop(user_id, None)
+        self.devices.pop(user_id, None)
+        self.biomarkers.pop(user_id, None)
+        self.consent.pop(user_id, None)
+        self.manual_entries.pop(user_id, None)
+        self.linked_providers.pop(user_id, None)
+        self.social_shares.pop(user_id, None)
+        self.appointments.pop(user_id, None)
+        self.support_tickets.pop(user_id, None)
+        self.notifications.pop(user_id, None)
+        self.alerts.pop(user_id, None)
+        self.emergency_contacts.pop(user_id, None)
+        self.mfa_state.pop(user_id, None)
+        self.providers.pop(user_id, None)
+        self.patient_alerts.pop(user_id, None)
+        self.audit_logs = [
+            log for log in self.audit_logs
+            if log.get("user_id") != user_id and log.get("target_user_id") != user_id
+        ]
+
+        for provider in self.providers.values():
+            patients = provider.get("patients", [])
+            if user_id in patients:
+                provider["patients"] = [pid for pid in patients if pid != user_id]
+
+        for provider_id, alerts in self.patient_alerts.items():
+            self.patient_alerts[provider_id] = [
+                alert for alert in alerts
+                if alert.get("patient_id") != user_id and alert.get("provider_id") != user_id
+            ]
+
+        return True
 
 mock_db = MockDB()

@@ -1,16 +1,22 @@
 from firebase_admin import firestore as fs
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+import hashlib
 import os
 
 _db = None
 USE_MOCK = os.getenv("USE_MOCK", "false").lower() == "true"
+PASSWORD_EXPIRY_DAYS = int(os.getenv("PASSWORD_EXPIRY_DAYS", "90"))
 
 def get_db():
     global _db
     if _db is None:
         _db = fs.client()
     return _db
+
+
+def hash_text(value: str) -> str:
+    return hashlib.sha256(value.encode()).hexdigest()
 
 
 def get_user(uid: str) -> Optional[Dict[str, Any]]:
@@ -27,6 +33,9 @@ def get_user(uid: str) -> Optional[Dict[str, Any]]:
 
 
 def update_user(uid: str, data: Dict[str, Any]) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.update_user(uid, data)
     try:
         db = get_db()
         data["updated_at"] = datetime.now().isoformat()
@@ -38,11 +47,27 @@ def update_user(uid: str, data: Dict[str, Any]) -> bool:
 
 
 def create_user(uid: str, user_data: Dict[str, Any]) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        now = datetime.now().isoformat()
+        if "created_at" not in user_data:
+            user_data["created_at"] = now
+        if "password_updated_at" not in user_data:
+            user_data["password_updated_at"] = now
+        if "password_expires_at" not in user_data:
+            user_data["password_expires_at"] = (datetime.now() + timedelta(days=PASSWORD_EXPIRY_DAYS)).isoformat()
+        user_data["updated_at"] = now
+        mock_db.users[uid] = user_data
+        return True
     db = get_db()
     try:
         now = datetime.now().isoformat()
         if "created_at" not in user_data:
             user_data["created_at"] = now
+        if "password_updated_at" not in user_data:
+            user_data["password_updated_at"] = now
+        if "password_expires_at" not in user_data:
+            user_data["password_expires_at"] = (datetime.now() + timedelta(days=PASSWORD_EXPIRY_DAYS)).isoformat()
         user_data["updated_at"] = now
         db.collection("users").document(uid).set(user_data)
         return True
@@ -72,6 +97,9 @@ def get_user_devices(user_id: str) -> List[Dict[str, Any]]:
 
 
 def add_device(user_id: str, device_data: Dict[str, Any]) -> str:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.add_device(user_id, device_data)
     db = get_db()
     try:
         now = datetime.now().isoformat()
@@ -90,6 +118,45 @@ def add_device(user_id: str, device_data: Dict[str, Any]) -> str:
     except Exception as e:
         print(f"Error adding device: {e}")
         return ""
+
+
+def update_device(user_id: str, device_id: str, updates: Dict[str, Any]) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.update_device(user_id, device_id, updates)
+    try:
+        db = get_db()
+        doc = db.collection("devices").document(device_id).get()
+        if not doc.exists:
+            return False
+        data = doc.to_dict() or {}
+        if data.get("user_id") != user_id:
+            return False
+        updates["updated_at"] = datetime.now().isoformat()
+        db.collection("devices").document(device_id).update(updates)
+        return True
+    except Exception as e:
+        print(f"Error updating device: {e}")
+        return False
+
+
+def delete_device(user_id: str, device_id: str) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.delete_device(user_id, device_id)
+    try:
+        db = get_db()
+        doc = db.collection("devices").document(device_id).get()
+        if not doc.exists:
+            return False
+        data = doc.to_dict() or {}
+        if data.get("user_id") != user_id:
+            return False
+        db.collection("devices").document(device_id).delete()
+        return True
+    except Exception as e:
+        print(f"Error deleting device: {e}")
+        return False
 
 
 def get_manual_entries(user_id: str) -> List[Dict[str, Any]]:
@@ -129,6 +196,14 @@ def add_manual_entry(user_id: str, entry_data: Dict[str, Any]) -> str:
 
 
 def delete_manual_entry(entry_id: str) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        for user_id, entries in mock_db.manual_entries.items():
+            for i, entry in enumerate(entries):
+                if entry.get("entry_id") == entry_id:
+                    entries.pop(i)
+                    return True
+        return False
     try:
         client = get_db()
         client.collection("manual_entries").document(entry_id).delete()
@@ -166,6 +241,15 @@ def get_all_biomarkers(user_id: str) -> List[Dict[str, Any]]:
 
 
 def get_consent_settings(user_id: str) -> Dict[str, Any]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        if user_id in mock_db.consent:
+            return mock_db.consent[user_id]
+        return {
+            "share_with_healthcare_providers": False,
+            "share_anonymized_data": False,
+            "data_retention_days": 7,
+        }
     db = get_db()
     try:
         doc = db.collection("consent").document(user_id).get()
@@ -183,6 +267,10 @@ def get_consent_settings(user_id: str) -> Dict[str, Any]:
 
 
 def update_consent_settings(user_id: str, settings: Dict[str, Any]) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        mock_db.consent[user_id] = settings
+        return True
     try:
         db = get_db()
         db.collection("consent").document(user_id).set(settings)
@@ -192,6 +280,218 @@ def update_consent_settings(user_id: str, settings: Dict[str, Any]) -> bool:
         return False
 
 
+def save_mfa_code(user_id: str, code: str, expires_at: str, delivery_method: str = "in_app") -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.save_mfa_code(user_id, code, expires_at)
+    try:
+        db = get_db()
+        db.collection("mfa_state").document(user_id).set({
+            "code_hash": hash_text(code),
+            "expires_at": expires_at,
+            "verified": False,
+            "verified_at": None,
+            "verified_until": None,
+            "delivery_method": delivery_method,
+        })
+        return True
+    except Exception as e:
+        print(f"MFA save failed: {e}")
+        return False
+
+
+def verify_mfa_code(user_id: str, code: str) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        verified_until = (datetime.now() + timedelta(hours=12)).isoformat()
+        return mock_db.verify_mfa_code(user_id, code, verified_until)
+    try:
+        db = get_db()
+        doc = db.collection("mfa_state").document(user_id).get()
+        if not doc.exists:
+            return False
+        state = doc.to_dict() or {}
+        if state.get("code_hash") != hash_text(code):
+            return False
+        expires_at = state.get("expires_at")
+        if expires_at:
+            expires_dt = datetime.fromisoformat(expires_at)
+            if expires_dt < datetime.now():
+                return False
+        verified_until = (datetime.now() + timedelta(hours=12)).isoformat()
+        db.collection("mfa_state").document(user_id).set({
+            "verified": True,
+            "verified_at": datetime.now().isoformat(),
+            "verified_until": verified_until,
+        }, merge=True)
+        return True
+    except Exception as e:
+        print(f"MFA verify failed: {e}")
+        return False
+
+
+def get_mfa_status(user_id: str) -> Dict[str, Any]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_mfa_status(user_id)
+    try:
+        db = get_db()
+        doc = db.collection("mfa_state").document(user_id).get()
+        if not doc.exists:
+            return {
+                "verified": False,
+                "verified_until": None,
+                "expires_at": None,
+                "has_pending_code": False,
+            }
+        state = doc.to_dict() or {}
+        verified = False
+        verified_until = state.get("verified_until")
+        if verified_until:
+            try:
+                verified = datetime.fromisoformat(verified_until) > datetime.now()
+            except Exception:
+                verified = False
+        has_pending_code = bool(state.get("code")) and not verified
+        return {
+            "verified": verified,
+            "verified_until": verified_until,
+            "expires_at": state.get("expires_at"),
+            "delivery_method": state.get("delivery_method", "in_app"),
+            "has_pending_code": bool(state.get("code_hash")) and not verified,
+        }
+    except Exception as e:
+        print(f"MFA status failed: {e}")
+        return {
+            "verified": False,
+            "verified_until": None,
+            "expires_at": None,
+            "delivery_method": "in_app",
+            "has_pending_code": False,
+        }
+
+
+def clear_mfa_state(user_id: str) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.clear_mfa_state(user_id)
+    try:
+        db = get_db()
+        db.collection("mfa_state").document(user_id).delete()
+        return True
+    except Exception as e:
+        print(f"MFA clear failed: {e}")
+        return False
+
+
+def create_audit_log(
+    user_id: Optional[str],
+    action: str,
+    category: str = "general",
+    target_user_id: Optional[str] = None,
+    status: str = "success",
+    details: Optional[Dict[str, Any]] = None,
+) -> str:
+    log_data = {
+        "user_id": user_id,
+        "target_user_id": target_user_id,
+        "action": action,
+        "category": category,
+        "status": status,
+        "details": details or {},
+        "created_at": datetime.now().isoformat(),
+    }
+
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.add_audit_log(log_data)
+
+    try:
+        db = get_db()
+        ref = db.collection("audit_logs").add(log_data)
+        audit_id = ref[1].id
+        db.collection("audit_logs").document(audit_id).set({"audit_id": audit_id}, merge=True)
+        return audit_id
+    except Exception as e:
+        print(f"DEBUG: create audit log error: {e}")
+        return ""
+
+
+def get_audit_logs(user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_audit_logs(user_id, limit=limit)
+
+    try:
+        db = get_db()
+        rows = {}
+        for field_name in ["user_id", "target_user_id"]:
+            docs = db.collection("audit_logs").where(field_name, "==", user_id).get()
+            for doc in docs:
+                data = doc_to_dict(doc)
+                rows[data["id"]] = data
+        logs = list(rows.values())
+        logs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return logs[:limit]
+    except Exception as e:
+        print(f"DEBUG: get audit logs error: {e}")
+        return []
+
+
+def get_access_logs(user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+    logs = get_audit_logs(user_id, limit=limit * 2)
+    filtered = [
+        log for log in logs
+        if log.get("category") in ["data_access", "sharing"]
+    ]
+    return filtered[:limit]
+
+
+def get_password_status(user_id: str) -> Dict[str, Any]:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.get_password_status(user_id)
+
+    user = get_user(user_id) or {}
+    updated_at = user.get("password_updated_at") or user.get("created_at")
+    expires_at = user.get("password_expires_at")
+
+    if not expires_at and updated_at:
+        try:
+            expires_at = (datetime.fromisoformat(updated_at) + timedelta(days=PASSWORD_EXPIRY_DAYS)).isoformat()
+        except Exception:
+            expires_at = None
+
+    expired = False
+    if expires_at:
+        try:
+            expired = datetime.fromisoformat(expires_at) < datetime.now()
+        except Exception:
+            expired = False
+
+    return {
+        "password_updated_at": updated_at,
+        "password_expires_at": expires_at,
+        "expired": expired,
+    }
+
+
+def mark_password_changed(user_id: str, days_until_expiry: int = PASSWORD_EXPIRY_DAYS) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.mark_password_changed(user_id, days_until_expiry)
+
+    user = get_user(user_id)
+    if not user:
+        return False
+
+    now = datetime.now().isoformat()
+    return update_user(user_id, {
+        "password_updated_at": now,
+        "password_expires_at": (datetime.now() + timedelta(days=days_until_expiry)).isoformat(),
+    })
+
+
 def doc_to_dict(doc):
     """convert doc to dict with id"""
     d = doc.to_dict()
@@ -199,7 +499,7 @@ def doc_to_dict(doc):
     return d
 
 
-# --- custom alerts functions ---
+# custom alerts functions
 
 def get_user_alerts(user_id: str) -> List[Dict[str, Any]]:
     """get all alert thresholds for a user"""
@@ -293,7 +593,7 @@ def update_alert(alert_id: str, alert_data: Dict[str, Any]) -> bool:
         return False
 
 
-# --- notification functions ---
+# notification functions
 
 def get_user_notifications(user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
     """get notifications for a user, sorted by date"""
@@ -308,8 +608,10 @@ def get_user_notifications(user_id: str, limit: int = 50) -> List[Dict[str, Any]
     
     try:
         db = get_db()
-        docs = db.collection("notifications").where("user_id", "==", user_id).order_by("created_at", direction="DESCENDING").limit(limit).get()
-        return [doc_to_dict(d) for d in docs]
+        docs = db.collection("notifications").where("user_id", "==", user_id).get()
+        notifications = [doc_to_dict(d) for d in docs]
+        notifications.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return notifications[:limit]
     except Exception as e:
         print(f"DEBUG: get notifications error: {e}")
         return []
@@ -336,6 +638,42 @@ def create_notification(notification_data: Dict[str, Any]) -> str:
     except Exception as e:
         print(f"DEBUG: create notification error: {e}")
         return ""
+
+
+def get_notification_settings(user_id: str) -> Dict[str, Any]:
+    defaults = {
+        "mute_all": False,
+        "general": True,
+        "appointment": True,
+        "provider_alert": True,
+        "emergency": True,
+        "companion": True,
+        "daily_summary": True,
+        "health_alert": True,
+        "quiet_hours_start": "",
+        "quiet_hours_end": "",
+    }
+
+    user = get_user(user_id) or {}
+    settings = user.get("notification_settings", {})
+
+    merged = defaults.copy()
+    merged.update(settings)
+    return merged
+
+
+def update_notification_settings(user_id: str, settings: Dict[str, Any]) -> bool:
+    current = get_notification_settings(user_id)
+    current.update(settings)
+
+    user = get_user(user_id)
+    if not user:
+        return create_user(user_id, {
+            "uid": user_id,
+            "notification_settings": current,
+        })
+
+    return update_user(user_id, {"notification_settings": current})
 
 
 def mark_notification_read(notification_id: str) -> bool:
@@ -405,7 +743,7 @@ def delete_notification(notification_id: str) -> bool:
         return False
 
 
-# --- emergency contacts functions ---
+# emergency contacts functions
 
 def get_emergency_contacts(user_id: str) -> List[Dict[str, Any]]:
     """get emergency contacts for a user"""
@@ -417,8 +755,10 @@ def get_emergency_contacts(user_id: str) -> List[Dict[str, Any]]:
     
     try:
         db = get_db()
-        docs = db.collection("emergency_contacts").where("user_id", "==", user_id).order_by("priority").get()
-        return [doc_to_dict(d) for d in docs]
+        docs = db.collection("emergency_contacts").where("user_id", "==", user_id).get()
+        contacts = [doc_to_dict(d) for d in docs]
+        contacts.sort(key=lambda x: x.get("priority", 999))
+        return contacts
     except Exception as e:
         print(f"DEBUG: get emergency contacts error: {e}")
         return []
@@ -493,7 +833,7 @@ def delete_emergency_contact(contact_id: str) -> bool:
         return False
 
 
-# --- third-party provider linking ---
+# third party provider linking
 
 def add_provider_link(user_id: str, link_data: Dict[str, Any]) -> str:
     """store a linked provider account (e.g., google, apple, facebook)"""
@@ -545,7 +885,7 @@ def delete_provider_link(link_id: str) -> bool:
         return False
 
 
-# --- social sharing ---
+# social sharing
 
 def create_social_share(user_id: str, share_data: Dict[str, Any]) -> str:
     """store a social share log"""
@@ -582,7 +922,7 @@ def get_social_shares(user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
         return []
 
 
-# --- appointments / reminders ---
+# appointments and reminders
 
 def create_appointment(appointment: Dict[str, Any]) -> str:
     """store an appointment/reminder for a patient"""
@@ -639,7 +979,7 @@ def update_appointment(appointment_id: str, updates: Dict[str, Any]) -> bool:
         return False
 
 
-# --- support/helpdesk ---
+# support and helpdesk
 
 def create_support_ticket(user_id: str, ticket: Dict[str, Any]) -> str:
     """store a support ticket"""
@@ -677,7 +1017,7 @@ def get_support_tickets(user_id: str) -> List[Dict[str, Any]]:
         return []
 
 
-# --- provider/patient management ---
+# provider and patient management
 
 def get_provider(provider_id: str) -> Optional[Dict[str, Any]]:
     if USE_MOCK:
@@ -731,7 +1071,22 @@ def get_patients_for_provider(provider_id: str) -> List[str]:
         return []
 
 
-# --- provider alerts for patients ---
+def can_provider_access_patient(provider_id: str, patient_id: str) -> bool:
+    try:
+        patient = get_user(patient_id)
+        if not patient:
+            return False
+        consent = get_consent_settings(patient_id)
+        share_ok = consent.get("share_with_healthcare_providers", False)
+        patient_ids = get_patients_for_provider(provider_id)
+        linked = patient_id in patient_ids
+        return share_ok and linked
+    except Exception as e:
+        print(f"DEBUG: provider access check failed: {e}")
+        return False
+
+
+# provider alerts for patients
 
 def add_patient_alert(provider_id: str, alert: Dict[str, Any]) -> str:
     if USE_MOCK:
@@ -765,3 +1120,54 @@ def get_patient_alerts(provider_id: str) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"DEBUG: get provider alerts error: {e}")
         return []
+
+
+def delete_user_account(user_id: str) -> bool:
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+        return mock_db.delete_account(user_id)
+    try:
+        db = get_db()
+
+        db.collection("users").document(user_id).delete()
+        db.collection("consent").document(user_id).delete()
+        db.collection("mfa_state").document(user_id).delete()
+
+        delete_rules = [
+            ("devices", "user_id"),
+            ("manual_entries", "user_id"),
+            ("biomarkers", "user_id"),
+            ("alerts", "user_id"),
+            ("linked_providers", "user_id"),
+            ("notifications", "user_id"),
+            ("emergency_contacts", "user_id"),
+            ("social_shares", "user_id"),
+            ("support_tickets", "user_id"),
+            ("appointments", "patient_id"),
+            ("appointments", "provider_id"),
+            ("provider_alerts", "patient_id"),
+            ("provider_alerts", "provider_id"),
+        ]
+
+        for collection_name, field_name in delete_rules:
+            docs = db.collection(collection_name).where(field_name, "==", user_id).get()
+            for doc in docs:
+                doc.reference.delete()
+
+        provider_doc = db.collection("providers").document(user_id).get()
+        if provider_doc.exists:
+            provider_doc.reference.delete()
+
+        provider_docs = db.collection("providers").get()
+        for doc in provider_docs:
+            data = doc.to_dict() or {}
+            patients = data.get("patients", [])
+            if user_id in patients:
+                doc.reference.update({
+                    "patients": [patient_id for patient_id in patients if patient_id != user_id]
+                })
+
+        return True
+    except Exception as e:
+        print(f"DEBUG: delete account failed: {e}")
+        return False

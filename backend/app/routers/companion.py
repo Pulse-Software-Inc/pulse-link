@@ -13,7 +13,7 @@ from app.core.security import get_current_user
 
 router = APIRouter(prefix="/companion", tags=["virtual companion"])
 
-# simple rule-based responses (no external ml services)
+# simple rule based responses with no external ml services
 # this keeps costs down and works offline
 
 @router.get("/status")
@@ -95,7 +95,7 @@ async def chat_with_companion(
         avg_hr = int(sum(heart_rates) / len(heart_rates)) if heart_rates else 0
         max_hr = max(heart_rates) if heart_rates else 0
         
-        # simple rule-based responses
+        # simple rule based responses
         response = ""
         suggestions = []
         
@@ -202,7 +202,7 @@ async def get_daily_tips(
             heart_rates = [r.get("heart_rate") for r in recent if r.get("heart_rate")]
             avg_hr = sum(heart_rates) / len(heart_rates) if heart_rates else 0
             
-            # step-based tips
+            # step based tips
             if avg_steps < 5000:
                 tips.append({
                     "category": "activity",

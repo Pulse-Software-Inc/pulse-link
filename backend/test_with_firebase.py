@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # test with real firebase token
-# get token from http://localhost:3000/firebase-test
+# get token from http://localhost:3000/firebase test
 
 import sys
 import os

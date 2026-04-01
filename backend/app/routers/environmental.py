@@ -13,7 +13,7 @@ from app.core.security import get_current_user
 
 router = APIRouter(prefix="/environmental", tags=["environmental"])
 
-# free open-meteo api (no api key needed)
+# free open meteo api (no api key needed)
 # could use openweathermap with api key for production
 
 @router.get("/weather")
@@ -28,7 +28,7 @@ async def get_weather(
     uses open-meteo api (free, no key needed).
     """
     try:
-        # open-meteo api
+        # open meteo api
         url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto"
         
         resp = requests.get(url, timeout=10)
@@ -117,7 +117,7 @@ async def get_air_quality(
     includes pm2.5, pm10, ozone, and health recommendations.
     """
     try:
-        # open-meteo air quality api
+        # open meteo air quality api
         url = f"https://air-quality-api.open-meteo.com/v1/air-quality?latitude={lat}&longitude={lon}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,ozone&timezone=auto"
         
         resp = requests.get(url, timeout=10)
