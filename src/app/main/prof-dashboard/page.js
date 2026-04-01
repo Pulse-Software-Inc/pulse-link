@@ -1,9 +1,9 @@
 'use client';
 import React from 'react';
-import DoctorSidebar from '@/components/doctorDB_siderbar';
+import DoctorSidebar from '@/components/nav/ProfessionalSideBarData';
 import Image from 'next/image';
-import DB_card from '@/components/doctorDB_cards';
-import useDoctorDB_cardsData from '@/components/doctorDB_cardsData';
+import DB_card from '@/components/dashboard/ProfessionalDashCards';
+import useDoctorDB_cardsData from '@/components/dashboard/ProfessionalDashCardsData';
 import ListOfPatients from '@/components/listOfPatients';
 
 function DoctorDashboard() {

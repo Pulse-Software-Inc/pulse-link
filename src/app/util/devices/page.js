@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import Sidebar from "@/components/Sidebar"
+import Sidebar from "@/components/nav/SideBar"
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState([])

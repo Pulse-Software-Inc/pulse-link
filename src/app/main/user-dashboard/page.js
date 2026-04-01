@@ -1,9 +1,9 @@
 'use client';
 import React from 'react';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/nav/SideBar';
 import Image from 'next/image';
-import DB_card from '@/components/DB_cards';
-import useDB_cardsData from '@/components/DB_cardsData';
+import DB_card from '@/components/dashboard/DashCards';
+import useDB_cardsData from '@/components/dashboard/DashCardsData';
 import WeeklyBarChart from '@/components/WeeklyBarChart';
 
 function UserDashboard() {
