@@ -70,8 +70,6 @@ export default function LoginPage() {
               <input
                 type="email"
                 id="email"
-                value={loginData.email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="john@gmail.com"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                 required
@@ -86,8 +84,6 @@ export default function LoginPage() {
               <input
                 type="password"
                 id="password"
-                value={loginData.password}
-                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                 required
@@ -99,9 +95,7 @@ export default function LoginPage() {
               <input
                 type="checkbox"
                 id="terms"
-                checked={loginData.acceptTerms}
-                onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="w-4 h-4 border-2 border-gray-300 rounded focus:ring-2 focus:ring-purple-400"
+                className="w-4 h-4 border-2 border-gray-300 rounded"
               />
               <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
                 I accept the Terms and Conditions
