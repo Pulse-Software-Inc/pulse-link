@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import DoctorSidebar from '@/components/nav/ProfessionalSideBarData';
+import DoctorSidebar from '@/components/nav/ProfessionalSideBar';
 import Image from 'next/image';
 import DB_card from '@/components/dashboard/ProfessionalDashCards';
 import useDoctorDB_cardsData from '@/components/dashboard/ProfessionalDashCardsData';
