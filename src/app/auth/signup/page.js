@@ -45,8 +45,8 @@ export default function SignUpPage() {
   {/* API Calls Here, Come Back On Issue #33*/ }
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password); // Mention Firebase Security Features
-    const idToken = userCredential.user.getIdToken();
+    const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password); // Mention Firebase Security Features, Fails if Email exists
+    const idToken = await userCredential.user.getIdToken();
     const response = await fetch('http://localhost:8000/api/v1/users/me', {
       method: 'PUT',
       headers: {
