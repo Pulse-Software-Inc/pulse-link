@@ -61,8 +61,9 @@ export default function SignUpPage() {
       }),
     })
 
-    const data = await response.json();
-    console.log(data);
+    if (response.ok) {
+      router.push('auth/login');
+    }
   };
 
   return (
