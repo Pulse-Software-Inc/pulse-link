@@ -45,27 +45,24 @@ export default function SignUpPage() {
   {/* API Calls Here, Come Back On Issue #33*/ }
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password).then((userCredential) => {
-      const user = userCredential.user;
-      const response = fetch('http://localhost:8000/api/v1/users/register', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          role: formData.role,
-        }),
-      })
-    }).catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      print(errorCode)
-      print(errorMessage)
-    });
+    const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password); // Mention Firebase Security Features
+    const idToken = userCredential.user.getIdToken();
+    const response = await fetch('http://localhost:8000/api/v1/users/me', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email, /* for invitations to client list */
+        role: formData.role
+      }),
+    })
 
+    const data = await response.json();
+    console.log(data);
   };
 
   return (
