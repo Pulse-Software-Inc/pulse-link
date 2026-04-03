@@ -5,12 +5,14 @@ import FormButton from "@/components/basics/FormButton"
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 {/* Firebase JS SDK For Authentication */ }
 import { auth } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function SignUpPage() {
+  const router = useRouter();
 
   {/* Constant tailwind styling configurations used in Form */ }
   const boxLabelStyling = 'block text-xs text-gray-500 mb-1'
@@ -42,7 +44,7 @@ export default function SignUpPage() {
     return styling
   }
 
-  {/* API Calls Here, Come Back On Issue #33*/ }
+  {/* API Calls Here */ }
   const handleSubmit = async (e) => {
     e.preventDefault();
     const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password); // Mention Firebase Security Features, Fails if Email exists
@@ -62,7 +64,7 @@ export default function SignUpPage() {
     })
 
     if (response.ok) {
-      router.push('auth/login');
+      router.push('/auth/login');
     }
   };
 
