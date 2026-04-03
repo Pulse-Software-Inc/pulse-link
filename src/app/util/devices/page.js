@@ -1,135 +1,125 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import Image from "next/image"
-import Sidebar from "@/components/nav/SideBar"
+import React from 'react';
+import Image from 'next/image';
+import Sidebar from '@/components/nav/SideBar';
 
 export default function DevicesPage() {
-  const [devices, setDevices] = useState([])
-  const [stats, setStats] = useState({ connected: 0, synced: 0, lastSynced: 0 })
-
-  useEffect(() => {
-    fetch("/userdata.json")
-      .then((res) => res.json())
-      .then((data) => {
-        const deviceList = data.devices || []
-        setDevices(deviceList)
-        
-        const connected = deviceList.filter((d) => d.is_active).length
-        const synced = deviceList.length
-        const lastSyncTimes = deviceList
-          .map((d) => new Date(d.last_sync).getTime())
-          .filter((t) => !isNaN(t))
-        const mostRecentSync = lastSyncTimes.length > 0 
-          ? Math.floor((Date.now() - Math.max(...lastSyncTimes)) / (1000 * 60 * 60))
-          : 0
-        
-        setStats({ connected, synced, lastSynced: mostRecentSync })
-      })
-      .catch((err) => console.error("Failed to load devices:", err))
-  }, [])
-
-  const formatLastSync = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffHours / 24)
-    
-    if (diffHours < 1) return "Just now"
-    if (diffHours < 24) return `${diffHours} hours ago`
-    if (diffDays === 1) return "Yesterday"
-    return `${diffDays} days ago`
-  }
-
-  const getDeviceIcon = (type) => {
-    switch (type) {
-      case "fitness_tracker":
-        return "/Devices_Icon.svg"
-      case "smartphone":
-        return "/Devices_Icon.svg"
-      default:
-        return "/Devices_Icon.svg"
-    }
-  }
-
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
       <Sidebar />
-      
+
       <main className="flex-1 p-8">
-        <div className="flex items-center gap-4 mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Devices</h1>
-          <Image src="/PulseLink_logo.svg" alt="PulseLink" width={40} height={40} />
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 border-b border-gray-200 pb-4">
+          <h1 className="text-2xl font-semibold text-gray-900">Devices</h1>
+          <Image src="/PulseLink_logo.svg" alt="PulseLink" width={44} height={44} />
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <Image src="/Devices_Icon.svg" alt="Connected" width={20} height={20} className="opacity-60" />
+        {/* Stat Cards */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-gray-500">Connected Devices</span>
+              <Image src="/Devices_Icon.svg" alt="Devices" width={18} height={18} className="opacity-40" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.connected}</p>
+            <p className="text-3xl font-semibold text-gray-900">2</p>
           </div>
-          
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <Image src="/Synced_Icon.svg" alt="Synced" width={20} height={20} className="opacity-60" />
+
+          <div className="border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-gray-500">Synced Metrics</span>
+              <Image src="/Synced_Icon.svg" alt="Synced" width={18} height={18} className="opacity-40" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.synced}</p>
+            <p className="text-3xl font-semibold text-gray-900">3 <span className="text-base font-normal text-gray-400">/3</span></p>
           </div>
-          
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-2">
-              <Image src="/Synced_Icon.svg" alt="Last Synced" width={20} height={20} className="opacity-60" />
+
+          <div className="border border-gray-200 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-gray-500">Last Synced</span>
+              <Image src="/Synced_Icon.svg" alt="Last Synced" width={18} height={18} className="opacity-40" />
             </div>
-            <p className="text-3xl font-bold text-gray-900">{stats.lastSynced} <span className="text-lg font-normal text-gray-500">hours</span></p>
+            <p className="text-3xl font-semibold text-gray-900">2 <span className="text-base font-normal text-gray-400">min ago</span></p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {devices.map((device) => (
-            <div
-              key={device.id}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#71E4FD] to-[#ECB6E6] flex items-center justify-center">
-                  <Image src={getDeviceIcon(device.device_type)} alt={device.device_name} width={24} height={24} className="invert" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{device.device_name}</h3>
-                  <p className="text-sm text-gray-500">Last synced: {formatLastSync(device.last_sync)}</p>
-                </div>
+        <hr className="border-gray-200 mb-6" />
+
+        /* Device List */
+        <div className="space-y-3">
+
+          {/* No name watch */}
+          <div className="flex items-center justify-between border border-gray-200 rounded-xl px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <Image src="/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
               </div>
-              
-              <div className="flex items-center gap-4">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  device.is_active 
-                    ? "bg-green-100 text-green-700" 
-                    : "bg-gray-100 text-gray-500"
-                }`}>
-                  {device.is_active ? "Active" : "Inactive"}
-                </span>
-                
-                <button className="px-4 py-2 bg-gradient-to-r from-[#71E4FD] via-[#B2C4FE] to-[#ECB6E6] text-white rounded-lg font-medium hover:opacity-90 transition-opacity">
-                  Sync
-                </button>
-                
-                <button className="px-4 py-2 border border-red-300 text-red-500 rounded-lg font-medium hover:bg-red-50 transition-colors">
-                  Disconnect
-                </button>
+              <div>
+                <p className="text-sm font-medium text-gray-900">No name watch</p>
+                <p className="text-xs text-gray-400">Last Sync 2 min ago <span className="text-green-500">90%</span></p>
               </div>
             </div>
-          ))}
+            <div className="flex items-center gap-4">
+              <button className="px-4 py-1.5 rounded-full text-xs font-medium text-white bg-gradient-to-r from-[#B2C4FE] to-[#ECB6E6] hover:opacity-90 transition-opacity">
+                UNSYNC
+              </button>
+              <div className="text-right">
+                <p className="text-xs text-gray-400 mb-1">Status</p>
+                <span className="px-3 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-700">CONNECTED</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div className="flex items-center justify-between border border-gray-200 rounded-xl px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <Image src="/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Phone</p>
+                <p className="text-xs text-gray-400">Last Sync 2 min ago <span className="text-yellow-500">67%</span></p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <button className="px-4 py-1.5 rounded-full text-xs font-medium text-white bg-gradient-to-r from-[#B2C4FE] to-[#ECB6E6] hover:opacity-90 transition-opacity">
+                UNSYNC
+              </button>
+              <div className="text-right">
+                <p className="text-xs text-gray-400 mb-1">Status</p>
+                <span className="px-3 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-700">CONNECTED</span>
+              </div>
+            </div>
+          </div>
+
+          {/* No name watch 2 */}
+          <div className="flex items-center justify-between border border-gray-200 rounded-xl px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <Image src="/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">No name watch 2</p>
+                <p className="text-xs text-gray-400">Last Sync 5 days ago</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-xs text-gray-400 mb-1">Status</p>
+                <span className="px-3 py-1 rounded-md text-xs font-semibold bg-gray-200 text-gray-500">DISCONNECTED</span>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <button className="mt-6 w-full py-4 border-2 border-dashed border-gray-300 rounded-2xl text-gray-500 font-medium hover:border-[#B2C4FE] hover:text-[#B2C4FE] transition-colors">
-          + Add New Device
-        </button>
+        {/* Connect More */}
+        <div className="flex justify-end mt-6">
+          <button className="px-5 py-2 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-[#B2C4FE] to-[#ECB6E6] hover:opacity-90 transition-opacity">
+            CONNECT MORE DEVICES
+          </button>
+        </div>
       </main>
     </div>
-  )
+  );
 }
