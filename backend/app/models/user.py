@@ -12,7 +12,6 @@ class UserCreate(BaseModel):
     last_name: Optional[str] = Field(default=None, validation_alias=AliasChoices("last_name", "lastName", "lastname"))
     role: Optional[str] = "user"
     age: Optional[int] = None
-    gender: Optional[str] = None
     language: Optional[str] = "en"
 
 
@@ -23,7 +22,6 @@ class UserProfile(BaseModel):
     last_name: Optional[str] = None
     role: str = "user"
     age: Optional[int] = None
-    gender: Optional[str] = None
     language: str = "en"
     emergency_contacts: Optional[List[dict]] = []  # might change this later
     created_at: datetime
@@ -38,7 +36,6 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
     age: Optional[int] = None
-    gender: Optional[str] = None
     language: Optional[str] = None
     emergency_contacts: Optional[List[dict]] = None
 
