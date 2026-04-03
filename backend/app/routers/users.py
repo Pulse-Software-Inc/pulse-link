@@ -43,10 +43,17 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
     from app.core import firestore
 
     updates = profile_update.model_dump(exclude_unset=True)
-    print("DEBUG: PUT /api/v1/users/me hit")
-    print(f"DEBUG: current_user={current_user}")
-    print(f"DEBUG: updates={updates}")
-    # update the user
+    existing_user = firestore.get_user(current_user["uid"])
+    if not existing_user:
+        user_data = {
+            "uid": current_user["uid"],
+            "email": current_user["email"],
+            "role": current_user.get("role", "user"),
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+        }
+        firestore.create_user(current_user["uid"], user_data)
+
     updated = firestore.update_user(current_user["uid"], updates)
 
     if not updated:
