@@ -2,12 +2,23 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import firebase_admin.auth as firebase_auth
 import os
+from typing import Optional
 
 security = HTTPBearer(auto_error=False)
 
 # check if in mock mode
 USE_MOCK = os.getenv("USE_MOCK", "false").lower() == "true"
-CHECK_REVOKED = os.getenv("CHECK_REVOKED_TOKENS", "true").lower() == "true"
+CHECK_REVOKED = os.getenv("CHECK_REVOKED_TOKENS", "false").lower() == "true"
+ROLE_ALIASES = {
+    "professional": "healthcare_provider",
+    "healthcare_provider": "healthcare_provider",
+    "provider": "healthcare_provider",
+    "user": "user",
+}
+
+
+def normalize_role(role: Optional[str]) -> str:
+    return ROLE_ALIASES.get((role or "user").strip().lower(), role or "user")
 
 
 async def verify_firebase_token(
@@ -68,15 +79,20 @@ async def verify_firebase_token(
 async def get_current_user(request: Request, token: dict = Depends(verify_firebase_token)):
     mfa_verified = False
     password_expired = False
+    role = token.get("role")
     try:
         from app.core import firestore
         mfa_status = firestore.get_mfa_status(token.get("uid"))
         mfa_verified = mfa_status.get("verified", False)
         password_status = firestore.get_password_status(token.get("uid"))
         password_expired = password_status.get("expired", False)
+        if not role:
+            user = firestore.get_user(token.get("uid")) or {}
+            role = user.get("role")
     except Exception:
         mfa_verified = False
         password_expired = False
+        role = token.get("role")
 
     allowed_when_expired = [
         "/api/v1/auth/me",
@@ -94,7 +110,7 @@ async def get_current_user(request: Request, token: dict = Depends(verify_fireba
     return {
         "uid": token.get("uid"),
         "email": token.get("email"),
-        "role": token.get("role", "user"),
+        "role": normalize_role(role),
         "mfa_verified": mfa_verified,
         "password_expired": password_expired,
     }
@@ -102,7 +118,7 @@ async def get_current_user(request: Request, token: dict = Depends(verify_fireba
 
 def require_role(required_role: str):
     async def role_checker(current_user: dict = Depends(get_current_user)):
-        if current_user["role"] != required_role:
+        if normalize_role(current_user["role"]) != normalize_role(required_role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Need {required_role} role",
