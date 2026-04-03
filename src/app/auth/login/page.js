@@ -1,6 +1,7 @@
 'use client';
 
 import FormButton from "@/components/basics/FormButton"
+import UserHeader from "@/components/basics/UserHeader"
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -17,37 +18,25 @@ export default function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle login logic here
-    console.log('Login attempt:', {loginData});
+    console.log('Login attempt:', { loginData });
     // Only redirects when login is successful
     router.push('/main/prof-dashboard');
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Logo in top left - consistent with signup page */}
-      <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
-        <Image
-          src="/PulseLink_logo.svg"
-          alt="PulseLink Logo"
-          width={100}
-          height={100}
-        />
-        <span className="text-white text-4xl">PulseLink</span>
-      </div>
-
       {/* Left Side - Gradient Background */}
       <div className="hidden lg:flex lg:w-1/2 bg-[linear-gradient(to_bottom_right,#ECB6E6,#D3B5FF,#B2C4FE,#71E4FD)] relative">
+        {/* Logo in top left - consistent with signup page */}
+        <div className="absolute top-6 left-6 flex items-center gap-3 z-10">
+          <UserHeader />
+        </div>
         {/* Main Content positioned at bottom */}
         <div className="text-white absolute bottom-8 left-12 right-12">
           <h1 className="text-5xl font-bold mb-6">Your health journey is here</h1>
           <p className="text-2xl font-light opacity-90 max-w-md">
             continue to track your wellness, monitor your progress, and achieve your health goals with personalized insights.
           </p>
-          <div className="flex gap-2 mt-8">
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-            <div className="w-2 h-2 bg-white/50 rounded-full"></div>
-            <div className="w-2 h-2 bg-white/50 rounded-full"></div>
-          </div>
         </div>
       </div>
 
