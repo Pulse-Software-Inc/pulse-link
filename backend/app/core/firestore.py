@@ -39,7 +39,7 @@ def update_user(uid: str, data: Dict[str, Any]) -> bool:
     try:
         db = get_db()
         data["updated_at"] = datetime.now().isoformat()
-        db.collection("users").document(uid).update(data)
+        db.collection("users").document(uid).set(data, merge=True)
         return True
     except Exception:
         # forgot to add error message here
