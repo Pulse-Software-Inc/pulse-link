@@ -7,7 +7,7 @@ import firebase_admin.auth as firebase_auth
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from app.core.security import get_current_user, require_mfa
+from app.core.security import get_current_user, normalize_role, require_mfa
 from app.models.user import UserUpdate, ConsentSettings
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -21,11 +21,10 @@ async def get_user_profile(request: Request, current_user: dict = Depends(get_cu
 
     # if user doesn't exist, create them
     if not user:
-        print(f"Creating new user: {current_user['uid']}")
         user_data = {
             "uid": current_user["uid"],
             "email": current_user["email"],
-            "role": current_user.get("role", "user"),
+            "role": normalize_role(current_user.get("role", "user")),
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
         }
@@ -44,15 +43,43 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
 
     updates = profile_update.model_dump(exclude_unset=True)
     existing_user = firestore.get_user(current_user["uid"])
+
+    if "role" in updates:
+        updates["role"] = normalize_role(updates["role"])
+
+    if "email" not in updates or not updates["email"]:
+        updates["email"] = current_user["email"]
+
+    if "role" not in updates or not updates["role"]:
+        updates["role"] = normalize_role(current_user.get("role", "user"))
+
+    if "email" in updates and updates["email"] and updates["email"] != current_user.get("email"):
+        if os.getenv("USE_MOCK", "false").lower() != "true":
+            try:
+                firebase_auth.update_user(current_user["uid"], email=updates["email"])
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Failed to update auth email: {e}")
+
     if not existing_user:
         user_data = {
             "uid": current_user["uid"],
-            "email": current_user["email"],
-            "role": current_user.get("role", "user"),
+            "email": updates["email"],
+            "role": updates["role"],
             "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat(),
+            **updates,
         }
-        firestore.create_user(current_user["uid"], user_data)
+        created = firestore.create_user(current_user["uid"], user_data)
+        if not created:
+            raise HTTPException(status_code=500, detail="Failed to create user")
+
+        firestore.create_audit_log(
+            user_id=current_user["uid"],
+            action="update_profile",
+            category="general",
+            status="success",
+            details={"fields": list(updates.keys())},
+        )
+        return {"message": "Profile updated", "user": user_data}
 
     updated = firestore.update_user(current_user["uid"], updates)
 
@@ -67,8 +94,7 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
         details={"fields": list(updates.keys())},
     )
 
-    # fetch updated user
-    updated_user = firestore.get_user(current_user["uid"])
+    updated_user = {**existing_user, **updates}
     return {"message": "Profile updated", "user": updated_user}
 
 
