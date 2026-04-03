@@ -1,9 +1,14 @@
 'use client';
+{/* Frontend Compenents */ }
 import UserHeader from "@/components/basics/UserHeader"
 import FormButton from "@/components/basics/FormButton"
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+
+{/* Firebase JS SDK For Authentication */ }
+import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 export default function SignUpPage() {
 
@@ -38,9 +43,29 @@ export default function SignUpPage() {
   }
 
   {/* API Calls Here, Come Back On Issue #33*/ }
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password).then((userCredential) => {
+      const user = userCredential.user;
+      const response = fetch('http://localhost:8000/api/v1/users/register', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          role: formData.role,
+        }),
+      })
+    }).catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      print(errorCode)
+      print(errorMessage)
+    });
+
   };
 
   return (
