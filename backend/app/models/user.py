@@ -1,11 +1,16 @@
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime
 
 
 class UserCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
     email: str
     password: str
+    first_name: Optional[str] = Field(default=None, validation_alias=AliasChoices("first_name", "firstName", "firstname"))
+    last_name: Optional[str] = Field(default=None, validation_alias=AliasChoices("last_name", "lastName", "lastname"))
+    role: Optional[str] = "user"
     age: Optional[int] = None
     gender: Optional[str] = None
     language: Optional[str] = "en"
@@ -14,6 +19,9 @@ class UserCreate(BaseModel):
 class UserProfile(BaseModel):
     uid: str
     email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: str = "user"
     age: Optional[int] = None
     gender: Optional[str] = None
     language: str = "en"
@@ -23,7 +31,12 @@ class UserProfile(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    # all optional for partial updates
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    first_name: Optional[str] = Field(default=None, validation_alias=AliasChoices("first_name", "firstName", "firstname"))
+    last_name: Optional[str] = Field(default=None, validation_alias=AliasChoices("last_name", "lastName", "lastname"))
+    email: Optional[str] = None
+    role: Optional[str] = None
     age: Optional[int] = None
     gender: Optional[str] = None
     language: Optional[str] = None
