@@ -21,7 +21,7 @@ export default function DevicesPage() {
           <div className="border border-gray-200 rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-gray-500">Connected Devices</span>
-              <Image src="/Devices_Icon.svg" alt="Devices" width={18} height={18} className="opacity-40" />
+              <Image src="/Sidebar/Devices_Icon.svg" alt="Devices" width={18} height={18} className="opacity-40" />
             </div>
             <p className="text-3xl font-semibold text-gray-900">2</p>
           </div>
@@ -29,7 +29,7 @@ export default function DevicesPage() {
           <div className="border border-gray-200 rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-gray-500">Synced Metrics</span>
-              <Image src="/Synced_Icon.svg" alt="Synced" width={18} height={18} className="opacity-40" />
+              <Image src="/DashboardIcons/Synced_Icon.svg" alt="Synced" width={18} height={18} className="opacity-40" />
             </div>
             <p className="text-3xl font-semibold text-gray-900">3 <span className="text-base font-normal text-gray-400">/3</span></p>
           </div>
@@ -37,7 +37,7 @@ export default function DevicesPage() {
           <div className="border border-gray-200 rounded-xl p-5">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-gray-500">Last Synced</span>
-              <Image src="/Synced_Icon.svg" alt="Last Synced" width={18} height={18} className="opacity-40" />
+              <Image src="/DashboardIcons/Synced_Icon.svg" alt="Last Synced" width={18} height={18} className="opacity-40" />
             </div>
             <p className="text-3xl font-semibold text-gray-900">2 <span className="text-base font-normal text-gray-400">min ago</span></p>
           </div>
@@ -52,7 +52,7 @@ export default function DevicesPage() {
           <div className="flex items-center justify-between border border-gray-200 rounded-xl px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <Image src="/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
+                <Image src="/Sidebar/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">No name watch</p>
@@ -74,7 +74,7 @@ export default function DevicesPage() {
           <div className="flex items-center justify-between border border-gray-200 rounded-xl px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <Image src="/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
+                <Image src="/Sidebar/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">Phone</p>
@@ -96,7 +96,7 @@ export default function DevicesPage() {
           <div className="flex items-center justify-between border border-gray-200 rounded-xl px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <Image src="/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
+                <Image src="/Sidebar/Devices_Icon.svg" alt="Device" width={16} height={16} className="opacity-50" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">No name watch 2</p>

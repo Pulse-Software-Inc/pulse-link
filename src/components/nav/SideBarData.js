@@ -5,17 +5,17 @@ import Image from "next/image";
 const SidebarData = [
     {
         title: "Dashboard",
-        icon: <Image src="/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
+        icon: <Image src="/Sidebar/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
         link: "/userdashboard"
     },
     {
         title: "Settings",
-        icon: <Image src="/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
+        icon: <Image src="/Sidebar/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
         link: "/auth/settings"
     },
     {  
         title: "Devices",
-        icon: <Image src="/Devices_Icon.svg" alt="Devices" width={24} height={24} />,
+        icon: <Image src="/Sidebar/Devices_Icon.svg" alt="Devices" width={24} height={24} />,
         link: "/auth/devices"
     },
   

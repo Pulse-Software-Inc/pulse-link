@@ -5,12 +5,12 @@ import Image from "next/image";
 const doctorSidebarData = [
     {
         title: "Dashboard",
-        icon: <Image src="/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
+        icon: <Image src="/Sidebar/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
         link: "/doctorDashboard"
     },
     {
         title: "Settings",
-        icon: <Image src="/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
+        icon: <Image src="/Sidebar/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
         link: "/Settings_Doc"
     },
 ];
