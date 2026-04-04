@@ -70,7 +70,7 @@ function DoctorSidebar() {
 
                 {/* Sign Out Button */}
                 <Link href="/auth/signout" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 font-semibold hover:bg-white/20 transition-all">
-                    <Image src="/LogOut_Icon.svg" alt="Sign out" width={24} height={24} />
+                    <Image src="/Sidebar/LogOut_Icon.svg" alt="Sign out" width={24} height={24} />
                     <span>Sign out</span>
                 </Link>
             </nav>
