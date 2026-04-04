@@ -13,6 +13,25 @@ from app.models.user import UserUpdate, ConsentSettings
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+def build_provider_profile(user_data: dict) -> dict:
+    first_name = (user_data.get("first_name") or "").strip()
+    last_name = (user_data.get("last_name") or "").strip()
+    name = " ".join(part for part in [first_name, last_name] if part).strip()
+    if not name:
+        name = (user_data.get("name") or user_data.get("email") or "Provider").strip()
+    return {
+        "email": user_data.get("email"),
+        "name": name,
+    }
+
+
+def sync_provider_profile(firestore_module, user_id: str, user_data: dict):
+    if normalize_role(user_data.get("role", "user")) != "healthcare_provider":
+        return
+    if not firestore_module.upsert_provider_profile(user_id, build_provider_profile(user_data)):
+        raise HTTPException(status_code=500, detail="Failed to create provider profile")
+
+
 @router.get("/me")
 async def get_user_profile(request: Request, current_user: dict = Depends(get_current_user)):
     from app.core import firestore
@@ -33,6 +52,8 @@ async def get_user_profile(request: Request, current_user: dict = Depends(get_cu
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    sync_provider_profile(firestore, current_user["uid"], user)
 
     return user
 
@@ -72,6 +93,8 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
         if not created:
             raise HTTPException(status_code=500, detail="Failed to create user")
 
+        sync_provider_profile(firestore, current_user["uid"], user_data)
+
         firestore.create_audit_log(
             user_id=current_user["uid"],
             action="update_profile",
@@ -95,6 +118,7 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
     )
 
     updated_user = {**existing_user, **updates}
+    sync_provider_profile(firestore, current_user["uid"], updated_user)
     return {"message": "Profile updated", "user": updated_user}
 
 

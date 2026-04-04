@@ -1032,6 +1032,40 @@ def get_provider(provider_id: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def upsert_provider_profile(provider_id: str, profile: Dict[str, Any]) -> bool:
+    now = datetime.now().isoformat()
+
+    if USE_MOCK:
+        from app.core.mock_db import mock_db
+
+        existing = mock_db.providers.get(provider_id, {})
+        provider_data = {**existing, **profile}
+        provider_data["uid"] = provider_id
+        provider_data["role"] = "healthcare_provider"
+        provider_data["patients"] = existing.get("patients", [])
+        provider_data["created_at"] = existing.get("created_at", now)
+        provider_data["updated_at"] = now
+        mock_db.providers[provider_id] = provider_data
+        return True
+
+    try:
+        db = get_db()
+        provider_ref = db.collection("providers").document(provider_id)
+        provider_doc = provider_ref.get()
+        existing = provider_doc.to_dict() if provider_doc.exists else {}
+        provider_data = {**existing, **profile}
+        provider_data["uid"] = provider_id
+        provider_data["role"] = "healthcare_provider"
+        provider_data["patients"] = existing.get("patients", [])
+        provider_data["created_at"] = existing.get("created_at", now)
+        provider_data["updated_at"] = now
+        provider_ref.set(provider_data, merge=True)
+        return True
+    except Exception as e:
+        print(f"DEBUG: upsert provider profile error: {e}")
+        return False
+
+
 def add_patient_to_provider(provider_id: str, patient_id: str) -> bool:
     if USE_MOCK:
         from app.core.mock_db import mock_db
