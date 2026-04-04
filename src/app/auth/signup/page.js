@@ -3,20 +3,18 @@
 import UserHeader from "@/components/basics/UserHeader"
 import FormButton from "@/components/basics/FormButton"
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 {/* Firebase JS SDK For Authentication */ }
 import { auth } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 
 export default function SignUpPage() {
-  const router = useRouter();
-
   {/* Constant tailwind styling configurations used in Form */ }
   const boxLabelStyling = 'block text-xs text-gray-500 mb-1'
   const inputBoxStyling = "w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+  const router = useRouter()
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -44,27 +42,41 @@ export default function SignUpPage() {
     return styling
   }
 
-  {/* API Calls Here */ }
+  {/* API Calls Here, Come Back On Issue #33*/ }
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password); // Mention Firebase Security Features, Fails if Email exists
-    const idToken = await userCredential.user.getIdToken();
-    const response = await fetch('http://localhost:8000/api/v1/users/me', {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email, /* for invitations to client list */
-        role: formData.role
-      }),
-    })
 
-    if (response.ok) {
+    let createdUser = null;
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      createdUser = userCredential.user;
+      const idToken = await createdUser.getIdToken();
+      const response = await fetch('http://localhost:8000/api/v1/users/me', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          role: formData.role
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
       router.push('/auth/login');
+    } catch {
+      if (createdUser) {
+        try {
+          await deleteUser(createdUser);
+        } catch {}
+      }
     }
   };
 
