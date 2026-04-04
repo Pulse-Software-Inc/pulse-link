@@ -637,7 +637,7 @@ async def get_dashboard_summary(
             {
                 "id": "Steps",
                 "title": "Steps",
-                "iconSrc": "/Steps_Icon.svg",
+                "iconSrc": "/Dashboard/Steps_Icon.svg",
                 "main": f"{total_steps:,}",
                 "sub": steps_sub,
                 "footer": steps_footer,
@@ -646,7 +646,7 @@ async def get_dashboard_summary(
             {
                 "id": "Kcal",
                 "title": "Calories Burned",
-                "iconSrc": "/Calories_Icon.svg",
+                "iconSrc": "/Dashboard/Calories_Icon.svg",
                 "main": str(int(total_calories)),
                 "sub": cal_sub,
                 "footer": None,
@@ -655,7 +655,7 @@ async def get_dashboard_summary(
             {
                 "id": "Heart",
                 "title": "Heart Rate",
-                "iconSrc": "/HeartRate_Icon.svg",
+                "iconSrc": "/Dashboard/HeartRate_Icon.svg",
                 "main": str(avg_heart_rate),
                 "sub": "BPM",
                 "footer": f"Resting: {resting_hr} BPM | Synced: {last_sync}",
