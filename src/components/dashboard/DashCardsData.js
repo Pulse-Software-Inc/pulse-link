@@ -40,7 +40,7 @@ export default function useDB_cardsData(
                     {
                         id: 'Steps',
                         title: 'Steps',
-                        iconSrc: '/Dashboard/Steps_Icon.svg',
+                        iconSrc: '/DashboardIcons/Steps_Icon.svg',
                         main: totalSteps,
                         sub: `/${stepGoal}`,
                         footer: s.data_points ? `Data points: ${s.data_points}` : null,
@@ -49,7 +49,7 @@ export default function useDB_cardsData(
                     {
                         id: 'Kcal',
                         title: 'Calories Burned',
-                        iconSrc: '/Dashboard/Calories_Icon.svg',
+                        iconSrc: '/DashboardIcons/Calories_Icon.svg',
                         main: Math.round(totalKcal),
                         sub: `/${kcalGoal}`,
                         footer: syncTxt,
@@ -58,7 +58,7 @@ export default function useDB_cardsData(
                     {
                         id: 'Heart',
                         title: 'Heart Rate',
-                        iconSrc: '/Dashboard/HeartRate_Icon.svg',
+                        iconSrc: '/DashboardIcons/HeartRate_Icon.svg',
                         main: avgHr,
                         sub: 'BPM',
                         footer: syncTxt
