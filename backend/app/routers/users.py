@@ -215,6 +215,7 @@ async def get_user_settings(current_user: dict = Depends(get_current_user)):
         "fname": first_name,
         "lname": last_name,
         "email": user.get("email") or current_user.get("email"),
+        "role": normalize_role(user.get("role") or current_user.get("role", "user")),
         "language": user.get("language", "en"),
         "ai_instructions": user.get("ai_instructions", "") or "",
         "daily_goals": get_daily_goals(user),
