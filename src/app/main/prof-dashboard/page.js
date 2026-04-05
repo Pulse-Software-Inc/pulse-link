@@ -6,6 +6,7 @@ import DB_card from '@/components/dashboard/ProfessionalDashCards';
 import useDoctorDB_cardsData from '@/components/dashboard/ProfessionalDashCardsData';
 import ListOfPatients from '@/components/listOfPatients';
 
+
 function DoctorDashboard() {
     const { cards, clients, providerName, loading, error } = useDoctorDB_cardsData('/prodata.json');
 
