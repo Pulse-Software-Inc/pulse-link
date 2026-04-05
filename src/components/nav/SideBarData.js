@@ -6,17 +6,17 @@ const SidebarData = [
     {
         title: "Dashboard",
         icon: <Image src="/Sidebar/Dashboard_Icon.svg" alt="Dashboard" width={24} height={24} />,
-        link: "/userdashboard"
+        link: "/main/user-dashboard"
     },
     {
         title: "Settings",
         icon: <Image src="/Sidebar/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
-        link: "/auth/settings"
+        link: "/util/user-settings"
     },
     {  
         title: "Devices",
         icon: <Image src="/Sidebar/Devices_Icon.svg" alt="Devices" width={24} height={24} />,
-        link: "/auth/devices"
+        link: "/util/devices"
     },
   
 ];
