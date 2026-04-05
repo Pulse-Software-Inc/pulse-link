@@ -8,6 +8,7 @@ import io
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from app.core.security import get_current_user, require_role
+from app.core.dashboard import build_last_7_days_metrics, get_daily_goals
 from app.routers.notifications import create_notification_internal
 
 # try to import reportlab for pdf generation
@@ -22,6 +23,69 @@ except ImportError:
     print("DEBUG: reportlab not available, pdf export disabled")
 
 router = APIRouter(prefix="/providers", tags=["healthcare providers"])
+
+
+def get_name_parts(user: dict):
+    first_name = (user.get("first_name") or "").strip()
+    last_name = (user.get("last_name") or "").strip()
+    if first_name or last_name:
+        return first_name, last_name
+
+    full_name = (user.get("name") or "").strip()
+    if not full_name:
+        return "", ""
+
+    parts = full_name.split()
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], " ".join(parts[1:])
+
+
+@router.get("/dashboard")
+async def get_provider_dashboard(current_user: dict = Depends(require_role("healthcare_provider"))):
+    from app.core import firestore
+
+    provider_id = current_user["uid"]
+    patient_ids = firestore.get_patients_for_provider(provider_id)
+    alerts = firestore.get_patient_alerts(provider_id)
+
+    clients = []
+    clients_logged_on_today = 0
+    today = datetime.now().date().isoformat()
+
+    for patient_id in patient_ids:
+        if not firestore.can_provider_access_patient(provider_id, patient_id):
+            continue
+
+        patient = firestore.get_user(patient_id) or {"uid": patient_id}
+        first_name, last_name = get_name_parts(patient)
+        records = firestore.get_all_biomarkers(patient_id)
+        metrics_last_7_days = build_last_7_days_metrics(records)
+
+        if any(
+            day["date"] == today and day["value"] != "N/A"
+            for metric_days in metrics_last_7_days.values()
+            for day in metric_days
+        ):
+            clients_logged_on_today += 1
+
+        clients.append({
+            "uid": patient_id,
+            "fname": first_name,
+            "lname": last_name,
+            "email": patient.get("email", ""),
+            "daily_goals": get_daily_goals(patient),
+            "metrics_last_7_days": metrics_last_7_days,
+        })
+
+    total_clients = len(clients)
+
+    return {
+        "total_clients": total_clients,
+        "active_alerts_sent": len([alert for alert in alerts if alert.get("enabled", True)]),
+        "clients_logged_on_today": min(clients_logged_on_today, total_clients),
+        "clients": clients,
+    }
 
 
 @router.get("/patients")
