@@ -85,7 +85,7 @@ export function SettingsSidebar({ activeSection, onNavigate }) {
       </div>
 
       <button className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white">
-        <Image src="/LogOut_Icon.svg" alt="Log Out" width={20} height={20} />
+        <Image src="/Sidebar/LogOut_Icon.svg" alt="Log Out" width={20} height={20} />
         Log Out
       </button>
     </aside>
