@@ -207,23 +207,29 @@ async def get_user_settings(current_user: dict = Depends(get_current_user)):
 
     user = ensure_user_profile(firestore, current_user)
     sync_provider_profile(firestore, current_user["uid"], user)
-    provider = firestore.get_provider(current_user["uid"]) if normalize_role(user.get("role")) == "healthcare_provider" else None
+    role = normalize_role(user.get("role") or current_user.get("role", "user"))
+    provider = firestore.get_provider(current_user["uid"]) if role == "healthcare_provider" else None
 
     first_name, last_name = get_name_parts(user)
 
-    return {
+    settings = {
         "fname": first_name,
         "lname": last_name,
         "email": user.get("email") or current_user.get("email"),
-        "role": normalize_role(user.get("role") or current_user.get("role", "user")),
+        "role": role,
         "language": user.get("language", "en"),
         "ai_instructions": user.get("ai_instructions", "") or "",
-        "daily_goals": get_daily_goals(user),
-        "notification_preferences": firestore.get_notification_settings(current_user["uid"]),
-        "emergency_settings": get_emergency_settings(user),
-        "devices": [serialize_device(device) for device in firestore.get_user_devices(current_user["uid"])],
-        "invite_clients": (provider or {}).get("invite_clients", []),
     }
+
+    if role == "healthcare_provider":
+        settings["invite_clients"] = (provider or {}).get("invite_clients", [])
+        return settings
+
+    settings["daily_goals"] = get_daily_goals(user)
+    settings["notification_preferences"] = firestore.get_notification_settings(current_user["uid"])
+    settings["emergency_settings"] = get_emergency_settings(user)
+    settings["devices"] = [serialize_device(device) for device in firestore.get_user_devices(current_user["uid"])]
+    return settings
 
 
 @router.put("/settings")
@@ -232,16 +238,17 @@ async def update_user_settings(settings_update: UserSettingsUpdate, current_user
 
     payload = settings_update.model_dump(exclude_unset=True)
     user = ensure_user_profile(firestore, current_user)
+    role = normalize_role(user.get("role") or current_user.get("role", "user"))
     user_updates: Dict[str, Any] = {}
 
     for key in ["first_name", "last_name", "language", "ai_instructions"]:
         if key in payload:
             user_updates[key] = payload[key]
 
-    if "daily_goals" in payload and payload["daily_goals"] is not None:
+    if role != "healthcare_provider" and "daily_goals" in payload and payload["daily_goals"] is not None:
         user_updates["daily_goals"] = payload["daily_goals"]
 
-    if "emergency_settings" in payload and payload["emergency_settings"] is not None:
+    if role != "healthcare_provider" and "emergency_settings" in payload and payload["emergency_settings"] is not None:
         user_updates["emergency_settings"] = payload["emergency_settings"]
 
     if "email" in payload and payload["email"] and payload["email"] != user.get("email"):
@@ -256,14 +263,14 @@ async def update_user_settings(settings_update: UserSettingsUpdate, current_user
         if not firestore.update_user(current_user["uid"], user_updates):
             raise HTTPException(status_code=500, detail="Failed to update settings")
 
-    if "notification_preferences" in payload and payload["notification_preferences"] is not None:
+    if role != "healthcare_provider" and "notification_preferences" in payload and payload["notification_preferences"] is not None:
         if not firestore.update_notification_settings(current_user["uid"], payload["notification_preferences"]):
             raise HTTPException(status_code=500, detail="Failed to update notification preferences")
 
-    if "devices" in payload and payload["devices"] is not None:
+    if role != "healthcare_provider" and "devices" in payload and payload["devices"] is not None:
         sync_settings_devices(firestore, current_user["uid"], payload["devices"])
 
-    if "invite_clients" in payload and payload["invite_clients"] is not None:
+    if role == "healthcare_provider" and "invite_clients" in payload and payload["invite_clients"] is not None:
         sync_provider_profile(
             firestore,
             current_user["uid"],
