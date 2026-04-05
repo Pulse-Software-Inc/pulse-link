@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple
 import sys
 import os
 from datetime import datetime
@@ -7,8 +7,9 @@ import firebase_admin.auth as firebase_auth
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from app.core.security import get_current_user, normalize_role, require_mfa
-from app.models.user import UserUpdate, ConsentSettings
+from app.core.security import get_current_user, normalize_role
+from app.core.dashboard import build_last_7_days_metrics, get_daily_goals, get_emergency_settings, serialize_device
+from app.models.user import UserUpdate, ConsentSettings, UserSettingsUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -19,10 +20,13 @@ def build_provider_profile(user_data: dict) -> dict:
     name = " ".join(part for part in [first_name, last_name] if part).strip()
     if not name:
         name = (user_data.get("name") or user_data.get("email") or "Provider").strip()
-    return {
+    profile = {
         "email": user_data.get("email"),
         "name": name,
     }
+    if "invite_clients" in user_data and user_data.get("invite_clients") is not None:
+        profile["invite_clients"] = user_data.get("invite_clients")
+    return profile
 
 
 def sync_provider_profile(firestore_module, user_id: str, user_data: dict):
@@ -32,26 +36,82 @@ def sync_provider_profile(firestore_module, user_id: str, user_data: dict):
         raise HTTPException(status_code=500, detail="Failed to create provider profile")
 
 
+def ensure_user_profile(firestore_module, current_user: dict) -> dict:
+    user = firestore_module.get_user(current_user["uid"])
+    if user:
+        return user
+
+    user_data = {
+        "uid": current_user["uid"],
+        "email": current_user["email"],
+        "role": normalize_role(current_user.get("role", "user")),
+        "created_at": datetime.now().isoformat(),
+        "updated_at": datetime.now().isoformat(),
+    }
+    if firestore_module.create_user(current_user["uid"], user_data):
+        return user_data
+    raise HTTPException(status_code=500, detail="Failed to create user")
+
+
+def get_name_parts(user: dict) -> Tuple[str, str]:
+    first_name = (user.get("first_name") or "").strip()
+    last_name = (user.get("last_name") or "").strip()
+    if first_name or last_name:
+        return first_name, last_name
+
+    full_name = (user.get("name") or "").strip()
+    if not full_name:
+        return "", ""
+
+    parts = full_name.split()
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], " ".join(parts[1:])
+
+
+def sync_settings_devices(firestore_module, user_id: str, devices: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    existing_devices = firestore_module.get_user_devices(user_id)
+    existing_ids = {
+        (device.get("device_id") or device.get("id")): device
+        for device in existing_devices
+        if device.get("device_id") or device.get("id")
+    }
+    kept_ids = set()
+
+    for device in devices:
+        device_payload = {
+            "device_name": device["device_name"],
+            "device_type": device["device_type"],
+            "brand": device.get("brand", ""),
+            "is_active": device.get("is_active", True),
+        }
+        if device.get("last_sync"):
+            device_payload["last_sync"] = device["last_sync"]
+
+        device_id = device.get("device_id")
+        if device_id and device_id in existing_ids:
+            if not firestore_module.update_device(user_id, device_id, device_payload):
+                raise HTTPException(status_code=500, detail="Failed to update device")
+            kept_ids.add(device_id)
+            continue
+
+        created_id = firestore_module.add_device(user_id, device_payload)
+        if not created_id:
+            raise HTTPException(status_code=500, detail="Failed to save device")
+        kept_ids.add(created_id)
+
+    for existing_id in existing_ids:
+        if existing_id not in kept_ids:
+            firestore_module.delete_device(user_id, existing_id)
+
+    return [serialize_device(device) for device in firestore_module.get_user_devices(user_id)]
+
+
 @router.get("/me")
 async def get_user_profile(request: Request, current_user: dict = Depends(get_current_user)):
     from app.core import firestore
 
-    user = firestore.get_user(current_user["uid"])
-
-    # if user doesn't exist, create them
-    if not user:
-        user_data = {
-            "uid": current_user["uid"],
-            "email": current_user["email"],
-            "role": normalize_role(current_user.get("role", "user")),
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat(),
-        }
-        if firestore.create_user(current_user["uid"], user_data):
-            user = user_data
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = ensure_user_profile(firestore, current_user)
 
     sync_provider_profile(firestore, current_user["uid"], user)
 
@@ -122,8 +182,115 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
     return {"message": "Profile updated", "user": updated_user}
 
 
+@router.get("/dashboard")
+async def get_user_dashboard(current_user: dict = Depends(get_current_user)):
+    from app.core import firestore
+
+    user = ensure_user_profile(firestore, current_user)
+    sync_provider_profile(firestore, current_user["uid"], user)
+
+    first_name, last_name = get_name_parts(user)
+    records = firestore.get_all_biomarkers(current_user["uid"])
+
+    return {
+        "fname": first_name,
+        "lname": last_name,
+        "daily_goals": get_daily_goals(user),
+        "metrics_last_7_days": build_last_7_days_metrics(records),
+        "ai_instructions": user.get("ai_instructions", "") or "",
+    }
+
+
+@router.get("/settings")
+async def get_user_settings(current_user: dict = Depends(get_current_user)):
+    from app.core import firestore
+
+    user = ensure_user_profile(firestore, current_user)
+    sync_provider_profile(firestore, current_user["uid"], user)
+    provider = firestore.get_provider(current_user["uid"]) if normalize_role(user.get("role")) == "healthcare_provider" else None
+
+    first_name, last_name = get_name_parts(user)
+
+    return {
+        "fname": first_name,
+        "lname": last_name,
+        "email": user.get("email") or current_user.get("email"),
+        "language": user.get("language", "en"),
+        "ai_instructions": user.get("ai_instructions", "") or "",
+        "daily_goals": get_daily_goals(user),
+        "notification_preferences": firestore.get_notification_settings(current_user["uid"]),
+        "emergency_settings": get_emergency_settings(user),
+        "devices": [serialize_device(device) for device in firestore.get_user_devices(current_user["uid"])],
+        "invite_clients": (provider or {}).get("invite_clients", []),
+    }
+
+
+@router.put("/settings")
+async def update_user_settings(settings_update: UserSettingsUpdate, current_user: dict = Depends(get_current_user)):
+    from app.core import firestore
+
+    payload = settings_update.model_dump(exclude_unset=True)
+    user = ensure_user_profile(firestore, current_user)
+    user_updates: Dict[str, Any] = {}
+
+    for key in ["first_name", "last_name", "language", "ai_instructions"]:
+        if key in payload:
+            user_updates[key] = payload[key]
+
+    if "daily_goals" in payload and payload["daily_goals"] is not None:
+        user_updates["daily_goals"] = payload["daily_goals"]
+
+    if "emergency_settings" in payload and payload["emergency_settings"] is not None:
+        user_updates["emergency_settings"] = payload["emergency_settings"]
+
+    if "email" in payload and payload["email"] and payload["email"] != user.get("email"):
+        if os.getenv("USE_MOCK", "false").lower() != "true":
+            try:
+                firebase_auth.update_user(current_user["uid"], email=payload["email"])
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Failed to update auth email: {e}")
+        user_updates["email"] = payload["email"]
+
+    if user_updates:
+        if not firestore.update_user(current_user["uid"], user_updates):
+            raise HTTPException(status_code=500, detail="Failed to update settings")
+
+    if "notification_preferences" in payload and payload["notification_preferences"] is not None:
+        if not firestore.update_notification_settings(current_user["uid"], payload["notification_preferences"]):
+            raise HTTPException(status_code=500, detail="Failed to update notification preferences")
+
+    if "devices" in payload and payload["devices"] is not None:
+        sync_settings_devices(firestore, current_user["uid"], payload["devices"])
+
+    if "invite_clients" in payload and payload["invite_clients"] is not None:
+        sync_provider_profile(
+            firestore,
+            current_user["uid"],
+            {
+                **user,
+                "invite_clients": payload["invite_clients"],
+            },
+        )
+
+    updated_user = ensure_user_profile(firestore, current_user)
+    sync_provider_profile(firestore, current_user["uid"], updated_user)
+    return await get_user_settings(current_user)
+
+
+@router.post("/settings")
+async def post_user_settings(settings_update: UserSettingsUpdate, current_user: dict = Depends(get_current_user)):
+    return await update_user_settings(settings_update, current_user)
+
+
+@router.get("/export/pdf")
+async def export_my_pdf(request: Request, current_user: dict = Depends(get_current_user)):
+    from app.routers.biomarkers import export_biomarkers
+
+    return await export_biomarkers(request=request, format="pdf", current_user=current_user)
+
+
 @router.delete("/me")
-async def delete_my_account(current_user: dict = Depends(require_mfa())):
+async def delete_my_account(current_user: dict = Depends(get_current_user)):
     from app.core import firestore
 
     uid = current_user["uid"]
