@@ -26,7 +26,7 @@ export default function SettingsSidebar(props) {
             <button
               key={link.id}
               onClick={() => nav.onNavigate(link.id)}
-              className={`rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors ${activeSection === link.id
+              className={`rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors ${nav.activeSection === link.id
                 ? "bg-white/25 text-white"
                 : "text-white/75 hover:bg-white/10 hover:text-white"
                 }`}
