@@ -25,14 +25,18 @@ import DevicesSection from "./sections/DevicesSection"
 
 
 export default function Settings(props) {
-  // states
-  // const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState({})
-  const router = useRouter();
-
   // finding ?role="" value
   const searchParams = useSearchParams()
   const role = searchParams.get("role")   // "user" | "professional"
+
+  // states
+  // const [loading, setLoading] = useState(true)
+  const [formData, setFormData] = useState(() => {
+    if (role === 'user') return userSettings
+    if (role === 'professional') return proSettings
+    return {}
+  })
+  const router = useRouter();
 
   // GET current settings from backend
   // useEffect(() => {
@@ -58,20 +62,9 @@ export default function Settings(props) {
     { id: "data-privacy", label: "Data and Privacy" },
   ]
 
-  // setting up page depending on pro or user
-  useEffect(() => {
-    if (role === 'user') {
-      setFormData(userSettings)   // or your API fetch
-    } else if (role === 'professional') {
-      setFormData(proSettings) // or your API fetch
-    } else {
-      router.push('/util/settings?role=user')
-    }
-  }, [role])  // only re-runs if role changes
-
   if (role == 'user') {
     sidebarLabels.push({ id: "goals", label: "Goals" },
-      { id: "notifications", label: "Notifications" }, { id:"devices", label: "Devices"})
+      { id: "notifications", label: "Notifications" }, { id: "devices", label: "Devices" })
   } else if (role == 'professional') {
     sidebarLabels.push({ id: "invite-clients", label: "Invite Clients" })
   } else
@@ -159,7 +152,7 @@ export default function Settings(props) {
             <hr style={{ borderColor: "#e5e7eb" }} />
             <DevicesSection />
             <hr style={{ borderColor: "#e5e7eb" }} />
-            {/* <NotificationsSection /> */}
+            <NotificationsSection formData={formData} updateField={updateField} />
             <hr style={{ borderColor: "#e5e7eb" }} />
           </div>
         </div>

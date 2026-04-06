@@ -16,17 +16,7 @@
     "provider_alert": true,
     "emergency": true,
     "companion": true,
-    "daily_summary": true,
-    "health_alert": true,
-    "quiet_hours_start": "",
-    "quiet_hours_end": ""
-  },
-  "emergency_settings": {
-    "auto_alert_enabled": true,
-    "heart_rate_threshold": 180,
-    "fall_detection_enabled": true,
-    "location_sharing_enabled": true,
-    "alert_delay_seconds": 30
+    "daily_summary": true
   },
   "devices": [
     {
