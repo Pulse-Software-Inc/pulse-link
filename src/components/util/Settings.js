@@ -22,6 +22,7 @@ import GoalsSection from "./sections/GoalsSection"
 import NotificationsSection from "./sections/NotificationsSection"
 import InviteClientsSection from "./sections/InviteClientsSection"
 import DevicesSection from "./sections/DevicesSection"
+import ModelInstructionSection from "./sections/ModelInstructionSection"
 
 
 export default function Settings(props) {
@@ -63,8 +64,10 @@ export default function Settings(props) {
   ]
 
   if (role == 'user') {
-    sidebarLabels.push({ id: "goals", label: "Goals" },
-      { id: "notifications", label: "Notifications" }, { id: "devices", label: "Devices" })
+    sidebarLabels.push(
+      { id: "devices", label: "Devices" },
+      { id: "notifications", label: "Notifications" }, { id: "goals", label: "Goals" },
+      { id: "ai", label: "Custom AI Instructions" })
   } else if (role == 'professional') {
     sidebarLabels.push({ id: "invite-clients", label: "Invite Clients" })
   } else
@@ -150,7 +153,7 @@ export default function Settings(props) {
             <hr style={{ borderColor: "#e5e7eb" }} />
             <DataPrivacySection />
             <hr style={{ borderColor: "#e5e7eb" }} />
-            <DevicesSection />
+            <DevicesSection formData={formData} updateField={updateField} />
             <hr style={{ borderColor: "#e5e7eb" }} />
             <NotificationsSection formData={formData} updateField={updateField} />
             <hr style={{ borderColor: "#e5e7eb" }} />
