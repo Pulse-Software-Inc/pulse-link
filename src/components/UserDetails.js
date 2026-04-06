@@ -1,24 +1,20 @@
 'use client';
 
-// Component to display detailed health metrics and weekly summary charts for a selected client in the doctor dashboard.
+// Component to display selected client health details in the doctor dashboard.
 import React, { useMemo } from 'react';
-import Image from 'next/image';
+import DashCard from './dashboard/DashCards';
+import WeeklyBarChart from './WeeklyBarChart';
 
 const STEP_GOAL = 10000;
 const CALORIE_GOAL = 500;
 const KM_PER_STEP = 0.00075;
 
-// this function makes sure value is within the range
-function clamp(value, min, max) {
-	return Math.max(min, Math.min(max, value));
-}
-
 function toNum(value, fallback = 0) {
 	if (typeof value === 'string') {
-		value = value.replace(/,/g, '').trim(); // Remove commas and trim whitespace
+		value = value.replace(/,/g, '').trim();
 	}
 	const n = Number(value);
-	return Number.isFinite(n) ? n : fallback;// Return fallback if value is not a finite number
+	return Number.isFinite(n) ? n : fallback;
 }
 
 function dayLabel(dateStr) {
@@ -31,12 +27,11 @@ function formatIsoDate(date) {
 	return date.toISOString().slice(0, 10);
 }
 
-
 function toIsoDate(value) {
 	if (!value) {
 		return null;
 	}
-// If the value is already a string in YYYY-MM-DD format, return it as is
+
 	if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
 		return value;
 	}
@@ -49,8 +44,6 @@ function toIsoDate(value) {
 	return formatIsoDate(date);
 }
 
-// the main part of the component that builds the weekly summary from client data, including steps, calories, heart rate, and generates the weekly bar chart data. 
-// It also determines the heart rate status and formats the data for display in the metric cards and charts.
 function buildWeeklySummaryFromClient(client, summary, biomarkers) {
 	const existingWeekly = client?.weeklySummary;
 	if (Array.isArray(existingWeekly?.daily_steps) && existingWeekly.daily_steps.length > 0) {
@@ -110,7 +103,6 @@ function buildWeeklySummaryFromClient(client, summary, biomarkers) {
 		});
 	}
 
-	// If no steps were recorded for the week but we have a weekly total then we will distribute it evenly across the days
 	const hasMeasuredSteps = daily_steps.some((day) => day.steps > 0);
 	if (!hasMeasuredSteps) {
 		const weeklyTotal = Math.round(toNum(summary?.total_steps, 0));
@@ -133,164 +125,69 @@ function buildWeeklySummaryFromClient(client, summary, biomarkers) {
 	};
 }
 
-function getHeartStatus(value) {
-	if (value <= 0) {
-		return {
-			label: 'UNKNOWN',
-			className: 'bg-gray-200 text-gray-700',
-		};
+function getHeartStatusLabel(value) {
+	if (value <= 0) return 'UNKNOWN';
+	if (value < 60) return 'LOW';
+	if (value <= 100) return 'NORMAL';
+	return 'HIGH';
+}
+
+function buildHeartRateDailyFromClient(biomarkers, weeklySummary) {
+	const week = weeklySummary?.daily_steps || [];
+	if (!week.length) {
+		return null;
 	}
 
-	if (value < 60) {
-		return {
-			label: 'LOW',
-			className: 'bg-amber-100 text-amber-700',
-		};
+	const ratesByDate = biomarkers.reduce((acc, point) => {
+		const date = toIsoDate(point?.timestamp);
+		const heartRate = toNum(point?.heart_rate, -1);
+		if (!date || heartRate <= 0) {
+			return acc;
+		}
+
+		const existing = acc.get(date) || [];
+		existing.push(heartRate);
+		acc.set(date, existing);
+		return acc;
+	}, new Map());
+
+	const averages = week.map((day) => {
+		const dayRates = ratesByDate.get(day.date) || [];
+		if (!dayRates.length) {
+			return 0;
+		}
+
+		const total = dayRates.reduce((sum, value) => sum + value, 0);
+		return Math.round(total / dayRates.length);
+	});
+
+	const validRates = averages.filter((value) => value > 0);
+	if (!validRates.length) {
+		return null;
 	}
 
-	if (value <= 100) {
-		return {
-			label: 'NORMAL',
-			className: 'bg-green-100 text-green-700',
-		};
-	}
+	const yMin = Math.max(30, Math.min(...validRates) - 10);
+	const yMax = Math.max(yMin + 20, Math.max(...validRates) + 10);
+
+	const points = week.map((day, index) => ({
+		label: dayLabel(day.date),
+		bpm: averages[index] > 0 ? averages[index] : yMin,
+	}));
 
 	return {
-		label: 'HIGH',
-		className: 'bg-red-100 text-red-700',
+		points,
+		y_min: yMin,
+		y_max: yMax,
 	};
 }
 
-function ProgressBar({ value = 0, max = 100 }) {
-	const safeMax = max === 0 ? 1 : max;
-	const width = clamp((value / safeMax) * 100, 0, 100);
+function buildChartDataPath(weeklySummary, heartRateDaily) {
+	const payload = {
+		weekly_summary: weeklySummary,
+		heart_rate_daily: heartRateDaily || { points: [] },
+	};
 
-	return (
-		<div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-			<div className="h-full rounded-full bg-gray-500" style={{ width: `${width}%` }} />
-		</div>
-	);
-}
-
-function MetricCard({ iconSrc, title, mainText, subText, progress, footer, statusBadge }) {
-	return (
-		<article className="rounded-2xl border border-gray-300 bg-white p-4 shadow-[0_3px_6px_rgba(0,0,0,0.08)]">
-			<div className="flex items-center gap-2">
-				<Image src={iconSrc} alt={`${title} icon`} width={16} height={16} className="h-4 w-4" />
-				<h4 className="text-base font-semibold text-gray-900">{title}</h4>
-			</div>
-
-			<div className="mt-3 text-gray-900">
-				<span className="text-2xl font-bold">{mainText}</span>
-				{subText ? <span className="ml-1 text-sm text-gray-500">{subText}</span> : null}
-			</div>
-
-			{progress ? (
-				<div className="mt-3">
-					<ProgressBar value={progress.value} max={progress.max} />
-				</div>
-			) : null}
-
-			{statusBadge ? (
-				<div className="mt-2">
-					<span className={`inline-flex rounded px-2 py-1 text-[10px] font-semibold ${statusBadge.className}`}>
-						{statusBadge.label}
-					</span>
-				</div>
-			) : null}
-
-			{footer ? <p className="mt-2 text-xs text-gray-500">{footer}</p> : null}
-		</article>
-	);
-}
-
-function ClientWeeklyBarChart({ weeklySummary }) {
-	const chartData = useMemo(() => {
-		const daily = weeklySummary?.daily_steps || [];
-		return daily.map((d) => ({
-			day: dayLabel(d.date),
-			value: toNum(d.steps, 0),
-			date: d.date,
-		}));
-	}, [weeklySummary]);
-
-	const maxVal = useMemo(() => {
-		const vals = chartData.map((d) => d.value);
-		return Math.max(...vals, 1);
-	}, [chartData]);
-
-	if (!weeklySummary?.daily_steps?.length) {
-		return (
-			<div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500 shadow-[0_6px_0_rgba(0,0,0,0.06)]">
-				No weekly step data available for this client.
-			</div>
-		);
-	}
-
-	return (
-		<div className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-[0_6px_0_rgba(0,0,0,0.06)]">
-			<button
-				type="button"
-				aria-label="Next"
-				className="absolute -right-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow hover:bg-gray-50"
-			>
-				<span className="text-gray-700">›</span>
-			</button>
-			<div className="flex h-[220px] items-end gap-4 px-2 pb-2 pt-6">
-				<div className="flex h-full w-12 flex-col justify-between text-[10px] text-gray-400">
-					<span>{Math.round((maxVal * 1.0) / 1000) * 1000}</span>
-					<span>{Math.round((maxVal * 0.75) / 1000) * 1000}</span>
-					<span>{Math.round((maxVal * 0.5) / 1000) * 1000}</span>
-					<span>{Math.round((maxVal * 0.25) / 1000) * 1000}</span>
-					<span>0</span>
-				</div>
-				<div className="relative h-full flex-1">
-					<div className="pointer-events-none absolute inset-0">
-						<div className="h-full w-full rounded-lg border border-dashed border-gray-100" />
-						<div className="absolute left-0 right-0 top-1/4 border-t border-dashed border-gray-100" />
-						<div className="absolute left-0 right-0 top-1/2 border-t border-dashed border-gray-100" />
-						<div className="absolute left-0 right-0 top-3/4 border-t border-dashed border-gray-100" />
-					</div>
-					<div className="relative flex h-full items-end justify-between gap-4 px-3">
-						{chartData.map((d) => {
-							const MAX_BAR_PX = 160;
-							const h = Math.max(3, (d.value / maxVal) * MAX_BAR_PX);
-							return (
-								<div key={d.date} className="flex flex-1 flex-col items-center gap-2">
-									<div
-										className="w-full max-w-[54px] rounded-lg bg-blue-500"
-										style={{ height: `${h}px` }}
-										title={`${d.date}: ${d.value}`}
-									/>
-									<div className="text-[10px] text-gray-500">{d.day}</div>
-								</div>
-							);
-						})}
-					</div>
-				</div>
-			</div>
-			<div className="mt-2 grid grid-cols-3 gap-4 text-center">
-				<div>
-					<div className="text-[10px] text-gray-400">Average Steps</div>
-					<div className="text-sm font-medium text-gray-700">
-						{toNum(weeklySummary.average_steps, 0).toLocaleString()}
-					</div>
-				</div>
-				<div>
-					<div className="text-[10px] text-gray-400">Total Distance</div>
-					<div className="text-sm font-medium text-gray-700">
-						{toNum(weeklySummary.total_distance_km, 0)} km
-					</div>
-				</div>
-				<div>
-					<div className="text-[10px] text-gray-400">Active Days</div>
-					<div className="text-sm font-medium text-gray-700">
-						{toNum(weeklySummary.active_days, 0)}/7
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+	return `data:application/json,${encodeURIComponent(JSON.stringify(payload))}`;
 }
 
 export default function UserGraphs({ client, onClose }) {
@@ -326,27 +223,74 @@ export default function UserGraphs({ client, onClose }) {
 			: Math.max(0, heartRate > 0 ? heartRate - 10 : 0);
 
 		const weeklySummary = buildWeeklySummaryFromClient(client, summary, biomarkers);
+		const heartRateDaily = buildHeartRateDailyFromClient(biomarkers, weeklySummary);
 
 		return {
 			steps,
 			calories,
 			heartRate,
 			restingHeartRate,
-			heartStatus: getHeartStatus(heartRate),
+			heartStatus: getHeartStatusLabel(heartRate),
 			weeklySummary,
+			heartRateDaily,
 		};
 	}, [client]);
+
+	const cards = useMemo(() => {
+		if (!details) {
+			return [];
+		}
+
+		return [
+			{
+				id: 'steps',
+				iconSrc: '/DashboardIcons/Steps_Icon.svg',
+				title: 'Steps',
+				main: details.steps.toLocaleString(),
+				sub: ` / ${STEP_GOAL.toLocaleString()}`,
+				progress: { value: details.steps, max: STEP_GOAL },
+				footer: '4% more than yesterday',
+			},
+			{
+				id: 'calories',
+				iconSrc: '/DashboardIcons/Calories_Icon.svg',
+				title: 'Calories',
+				main: details.calories.toLocaleString(),
+				sub: ` / ${CALORIE_GOAL.toLocaleString()}`,
+				progress: { value: details.calories, max: CALORIE_GOAL },
+				footer: 'Daily calorie target',
+			},
+			{
+				id: 'heart-rate',
+				iconSrc: '/DashboardIcons/HeartRate_Icon.svg',
+				title: 'Heart Rate',
+				main: details.heartRate > 0 ? details.heartRate.toLocaleString() : 'N/A',
+				sub: details.heartRate > 0 ? ' BPM' : '',
+				footer: `Status: ${details.heartStatus} | Resting: ${details.restingHeartRate > 0 ? details.restingHeartRate : 'N/A'} BPM`,
+			},
+		];
+	}, [details]);
+
+	const chartDataPath = useMemo(() => {
+		if (!details?.weeklySummary) {
+			return '/userdata.json';
+		}
+
+		return buildChartDataPath(details.weeklySummary, details.heartRateDaily);
+	}, [details]);
 
 	if (!client || !details) {
 		return null;
 	}
 
+	const closeButtonStyling = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-gray-100';
+
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4">
-			<div className="w-full max-w-5xl rounded-[28px] border border-gray-300 bg-[#f5f5f5] p-5 shadow-[0_16px_32px_rgba(0,0,0,0.18)] sm:p-6">
+			<div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-gray-300 bg-[#f5f5f5] p-5 shadow-xl sm:p-6">
 				<div className="flex items-start justify-between gap-4">
 					<div>
-						<h3 className="text-xl font-semibold text-gray-900">Client Details</h3>
+						<h3 className="text-2xl font-normal text-gray-800">Client Details</h3>
 						<p className="mt-1 text-sm text-gray-500">
 							{client.name} | Age {client.age ?? 'N/A'} | Select a client to view their detailed health metrics
 						</p>
@@ -355,43 +299,22 @@ export default function UserGraphs({ client, onClose }) {
 						type="button"
 						onClick={onClose}
 						aria-label="Close client details"
-						className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d8b9ff] bg-[#f2e8ff] text-[#b27be8] transition-colors hover:bg-[#ead8ff]"
+						className={closeButtonStyling}
 					>
 						X
 					</button>
 				</div>
 
 				<div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-					<MetricCard
-						iconSrc="/DashboardIcons/Steps_Icon.svg"
-						title="Steps"
-						mainText={details.steps.toLocaleString()}
-						subText={`/ ${STEP_GOAL.toLocaleString()}`}
-						progress={{ value: details.steps, max: STEP_GOAL }}
-						footer="4% more than yesterday"
-					/>
-
-					<MetricCard
-						iconSrc="/DashboardIcons/Calories_Icon.svg"
-						title="Calories"
-						mainText={details.calories.toLocaleString()}
-						subText={`/ ${CALORIE_GOAL.toLocaleString()}`}
-						progress={{ value: details.calories, max: CALORIE_GOAL }}
-						footer="Daily calorie target"
-					/>
-
-					<MetricCard
-						iconSrc="/DashboardIcons/HeartRate_Icon.svg"
-						title="Heart Rate"
-						mainText={details.heartRate > 0 ? details.heartRate.toLocaleString() : 'N/A'}
-						subText={details.heartRate > 0 ? 'BPM' : ''}
-						statusBadge={details.heartStatus}
-						footer={`Resting: ${details.restingHeartRate > 0 ? details.restingHeartRate : 'N/A'} BPM`}
-					/>
+					{cards.map((val) => (
+						<DashCard key={val.id} val={val} />
+					))}
 				</div>
 
 				<div className="mt-4">
-					<ClientWeeklyBarChart weeklySummary={details.weeklySummary} />
+					<div className="compactChart mx-auto w-full max-w-4xl max-h-[400px]">
+						<WeeklyBarChart jsonPath={chartDataPath} />
+					</div>
 				</div>
 			</div>
 		</div>

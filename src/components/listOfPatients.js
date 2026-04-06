@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import UserGraphs from '@/components/UserDetails';
+import UserGraphs from './UserDetails.js';
 
 function ListOfPatients({ loading, error, clients = [] }) {
 	const [selectedClient, setSelectedClient] = useState(null);
