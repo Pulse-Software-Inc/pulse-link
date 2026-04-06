@@ -131,7 +131,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
 
       {slide === 0 ? (
         <>
-          <div className="h-[320px] flex items-end gap-4 px-2 pt-6 pb-2">
+          <div className="h-[420px] flex items-end gap-4 px-2 pt-6 pb-2">
             <div className="h-full w-12 flex flex-col justify-between text-[10px] text-gray-400">
               <span>{Math.round((maxSteps * 1.0) / 1000) * 1000}</span>
               <span>{Math.round((maxSteps * 0.75) / 1000) * 1000}</span>
@@ -149,7 +149,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
 
               <div className="relative h-full flex items-end justify-between gap-4 px-3">
                 {barData.map((d) => {
-                  const MAX_BAR_PX = 240;
+                  const MAX_BAR_PX = 340;
                   const h = Math.max(3, (d.value / maxSteps) * MAX_BAR_PX);
 
                   return (
@@ -191,7 +191,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
           ) : (
             <>
               <div className="w-full overflow-hidden rounded-2xl">
-                <svg viewBox={`0 0 ${hrSvg.W} ${hrSvg.H}`} className="w-full h-[320px]">
+                <svg viewBox={`0 0 ${hrSvg.W} ${hrSvg.H}`} className="w-full h-[420px]">
                   {[0, 0.25, 0.5, 0.75, 1].map((t) => {
                     const y = hrSvg.padT + (1 - t) * hrSvg.plotH;
                     return (

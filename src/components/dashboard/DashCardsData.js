@@ -43,7 +43,7 @@ export default function useDB_cardsData(
                         iconSrc: '/DashboardIcons/Steps_Icon.svg',
                         main: totalSteps,
                         sub: `/${stepGoal}`,
-                        footer: s.data_points ? `Data points: ${s.data_points}` : null,
+                        footer: null,
                         progress: { value: totalSteps, max: num(stepGoal, 1) },
                     },
                     {
@@ -52,7 +52,7 @@ export default function useDB_cardsData(
                         iconSrc: '/DashboardIcons/Calories_Icon.svg',
                         main: Math.round(totalKcal),
                         sub: `/${kcalGoal}`,
-                        footer: syncTxt,
+                        footer: null,
                         progress: { value: totalKcal, max: num(kcalGoal, 1) },
                     },
                     {
@@ -61,7 +61,7 @@ export default function useDB_cardsData(
                         iconSrc: '/DashboardIcons/HeartRate_Icon.svg',
                         main: avgHr,
                         sub: 'BPM',
-                        footer: syncTxt
+                        footer: null,
                     },
                 ];
                 if (!cancelled) setCards(mapped);

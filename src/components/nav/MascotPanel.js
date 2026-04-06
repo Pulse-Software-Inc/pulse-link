@@ -22,13 +22,13 @@ export default function MascotPanel({ stepsPct = 0, caloriesPct = 0 }) {
   const src = pickMascot(stepsPct, caloriesPct);
 
   return (
-    <div className="rounded-2xl bg-white flex items-center justify-center h-full min-h-[320px] xl:min-h-[720px]">
+    <div className="rounded-2xl bg-white flex items-center justify-center h-full w-full">
       <Image
         src={src}
         alt="Mascot"
         width={520}
         height={900}
-        className="w-full h-full object-contain"
+        className="w-full max-w-[420px] h-auto object-contain"
         priority
       />
     </div>
