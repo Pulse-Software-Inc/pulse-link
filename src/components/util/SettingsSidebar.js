@@ -7,7 +7,7 @@ export default function SettingsSidebar(props) {
 
   return (
     <aside
-      className="flex h-full w-[260px] shrink-0 flex-col justify-between px-6 py-8"
+      className="hidden md:flex h-full w-[260px] shrink-0 flex-col justify-between px-6 py-8"
       style={{
         background:
           "linear-gradient(135deg, #5EEDFD 0%, #DDB1FC 50%, #FFBBC9 100%)",
@@ -25,7 +25,7 @@ export default function SettingsSidebar(props) {
           {allLinks.map((link) => (
             <button
               key={link.id}
-              onClick={() => nav.onNavigate(link.id)}
+              onClick={() => nav.handleNavigate(link.id)}
               className={`rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors ${nav.activeSection === link.id
                 ? "bg-white/25 text-white"
                 : "text-white/75 hover:bg-white/10 hover:text-white"
