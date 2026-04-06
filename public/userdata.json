@@ -115,6 +115,23 @@
   "total_distance_km": 57.3,
   "active_days": 7
   },
+  
+  "heart_rate_daily": {
+  "resting_bpm": 58,
+  "average_bpm": 74,
+  "peak_bpm": 95,
+  "y_min": 40,
+  "y_max": 120,
+  "points": [
+    { "label": "6am",  "bpm": 62 },
+    { "label": "9am",  "bpm": 72 },
+    { "label": "12pm", "bpm": 85 },
+    { "label": "3pm",  "bpm": 78 },
+    { "label": "6pm",  "bpm": 95 },
+    { "label": "9pm",  "bpm": 68 },
+    { "label": "12am", "bpm": 58 }
+  ]
+},
    
   "devices": [
     {
