@@ -1,0 +1,41 @@
+{
+  "fname": "Amin",
+  "lname": "Afara",
+  "email": "user@example.com",
+  "language": "en",
+  "ai_instructions": "Focus on recovery.",
+  "daily_goals": {
+    "steps": 9000,
+    "calories": 2200,
+    "heart_rate": 75
+  },
+  "notification_preferences": {
+    "mute_all": false,
+    "general": true,
+    "appointment": true,
+    "provider_alert": true,
+    "emergency": true,
+    "companion": true,
+    "daily_summary": true,
+    "health_alert": true,
+    "quiet_hours_start": "",
+    "quiet_hours_end": ""
+  },
+  "emergency_settings": {
+    "auto_alert_enabled": true,
+    "heart_rate_threshold": 180,
+    "fall_detection_enabled": true,
+    "location_sharing_enabled": true,
+    "alert_delay_seconds": 30
+  },
+  "devices": [
+    {
+      "device_id": "device_1",
+      "device_name": "Apple Watch",
+      "device_type": "smartwatch",
+      "brand": "Apple",
+      "is_active": true,
+      "last_sync": null
+    }
+  ]
+}
