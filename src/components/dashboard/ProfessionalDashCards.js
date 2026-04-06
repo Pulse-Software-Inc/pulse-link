@@ -28,10 +28,10 @@ function ProgressBar({ value = 0, max = 100 }) {
 //Main Card
 export default function DB_card({ val }) {
     return (
-        <div className="rounded-2xl border border-gray-300 shadow-sm p-5 min-h-[210px]">
+        <div className="min-h-[190px] rounded-2xl border border-gray-300 p-4 shadow-sm sm:min-h-[210px] sm:p-5">
             <div className="flex h-full flex-col justify-between">
                 <div className="flex items-start justify-between">
-                    <h3 className="text-[24px] font-medium leading-none text-gray-900">{val.title}</h3>
+                    <h3 className="pr-2 text-xl font-medium leading-tight text-gray-900 sm:text-2xl">{val.title}</h3>
 
                     <Image
                         src={val.iconSrc}
@@ -44,10 +44,10 @@ export default function DB_card({ val }) {
 
                 <div>
                     <div className="text-gray-900">
-                        <span className="text-4xl font-medium leading-none">{val.main}</span>
+                        <span className="text-3xl font-medium leading-none sm:text-4xl">{val.main}</span>
                     </div>
 
-                    {val.sub ? <div className="mt-1 text-xl text-gray-500">{val.sub.trim()}</div> : null}
+                    {val.sub ? <div className="mt-1 text-lg text-gray-500 sm:text-xl">{val.sub.trim()}</div> : null}
 
                     {val.progress ? (
                         <div className="mt-3">
