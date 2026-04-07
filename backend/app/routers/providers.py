@@ -8,7 +8,13 @@ import io
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from app.core.security import get_current_user, require_role
-from app.core.dashboard import build_last_7_days_metrics, get_daily_goals
+from app.core.dashboard import (
+    build_last_7_days_metrics,
+    build_recent_biomarkers,
+    build_weekly_patient_summary,
+    build_weekly_summary,
+    get_daily_goals,
+)
 from app.routers.notifications import create_notification_internal
 
 # try to import reportlab for pdf generation
@@ -44,47 +50,95 @@ def get_name_parts(user: dict):
 @router.get("/dashboard")
 async def get_provider_dashboard(current_user: dict = Depends(require_role("healthcare_provider"))):
     from app.core import firestore
+    from app.core.security import public_role
 
     provider_id = current_user["uid"]
+    provider = firestore.get_provider(provider_id) or {}
     patient_ids = firestore.get_patients_for_provider(provider_id)
     alerts = firestore.get_patient_alerts(provider_id)
 
-    clients = []
+    patients = []
     clients_logged_on_today = 0
     today = datetime.now().date().isoformat()
+    pending_consents = []
 
     for patient_id in patient_ids:
-        if not firestore.can_provider_access_patient(provider_id, patient_id):
-            continue
-
         patient = firestore.get_user(patient_id) or {"uid": patient_id}
+        consent = firestore.get_consent_settings(patient_id)
+        can_access = firestore.can_provider_access_patient(provider_id, patient_id)
         first_name, last_name = get_name_parts(patient)
-        records = firestore.get_all_biomarkers(patient_id)
-        metrics_last_7_days = build_last_7_days_metrics(records)
+        display_name = " ".join(part for part in [first_name, last_name] if part).strip() or patient.get("email") or patient_id
+        records = firestore.get_all_biomarkers(patient_id) if can_access else []
+        metrics_last_7_days = build_last_7_days_metrics(records) if can_access else build_last_7_days_metrics([])
+        recent_biomarkers = build_recent_biomarkers(records, limit=10) if can_access else []
+        summary = build_weekly_patient_summary(records) if can_access and records else None
+        weekly_summary = build_weekly_summary(records) if can_access and records else None
+        patient_alerts = [
+            alert for alert in alerts
+            if alert.get("patient_id") == patient_id and alert.get("enabled", True)
+        ]
+        last_activity = recent_biomarkers[-1]["timestamp"] if recent_biomarkers else None
+        consent_granted = bool(consent.get("share_with_healthcare_providers", False))
 
-        if any(
+        if can_access and any(
             day["date"] == today and day["value"] != "N/A"
             for metric_days in metrics_last_7_days.values()
             for day in metric_days
         ):
             clients_logged_on_today += 1
 
-        clients.append({
+        if not consent_granted:
+            pending_consents.append({
+                "uid": patient_id,
+                "email": patient.get("email", ""),
+                "requested_at": patient.get("updated_at") or patient.get("created_at"),
+                "status": "pending",
+            })
+
+        patients.append({
             "uid": patient_id,
+            "id": patient_id,
+            "name": display_name,
             "fname": first_name,
             "lname": last_name,
             "email": patient.get("email", ""),
+            "age": patient.get("age"),
+            "gender": patient.get("gender"),
+            "consent_granted": consent_granted,
+            "consent_updated_at": patient.get("updated_at"),
+            "last_activity": last_activity,
+            "status": "ACTIVE" if consent_granted else "INACTIVE",
+            "alerts": len(patient_alerts),
+            "recent_biomarkers": recent_biomarkers,
+            "summary": summary,
+            "weekly_summary": weekly_summary,
             "daily_goals": get_daily_goals(patient),
             "metrics_last_7_days": metrics_last_7_days,
         })
 
-    total_clients = len(clients)
+    total_clients = len(patients)
+    provider_name = provider.get("name") or " ".join(part for part in get_name_parts(provider) if part).strip() or current_user.get("email") or "Doctor"
+    provider_profile = {
+        "uid": provider_id,
+        "email": provider.get("email") or current_user.get("email"),
+        "name": provider_name,
+        "specialty": provider.get("specialty"),
+        "role": public_role(provider.get("role") or current_user.get("role")),
+        "created_at": provider.get("created_at"),
+        "updated_at": provider.get("updated_at"),
+    }
 
     return {
+        "provider_id": provider_id,
+        "provider_email": provider_profile["email"],
+        "provider_name": provider_name,
+        "provider_profile": provider_profile,
+        "patients": patients,
+        "pending_consents": pending_consents,
         "total_clients": total_clients,
         "active_alerts_sent": len([alert for alert in alerts if alert.get("enabled", True)]),
         "clients_logged_on_today": min(clients_logged_on_today, total_clients),
-        "clients": clients,
+        "clients": patients,
     }
 
 
