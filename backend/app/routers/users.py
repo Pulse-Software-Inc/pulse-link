@@ -7,7 +7,7 @@ import firebase_admin.auth as firebase_auth
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from app.core.security import get_current_user, normalize_role
+from app.core.security import get_current_user, normalize_role, public_role, serialize_public_role_fields
 from app.core.dashboard import build_last_7_days_metrics, get_daily_goals, get_emergency_settings, serialize_device
 from app.models.user import UserUpdate, ConsentSettings, UserSettingsUpdate
 
@@ -115,7 +115,7 @@ async def get_user_profile(request: Request, current_user: dict = Depends(get_cu
 
     sync_provider_profile(firestore, current_user["uid"], user)
 
-    return user
+    return serialize_public_role_fields(user)
 
 
 @router.put("/me")
@@ -162,7 +162,7 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
             status="success",
             details={"fields": list(updates.keys())},
         )
-        return {"message": "Profile updated", "user": user_data}
+        return {"message": "Profile updated", "user": serialize_public_role_fields(user_data)}
 
     updated = firestore.update_user(current_user["uid"], updates)
 
@@ -179,7 +179,7 @@ async def update_user_profile(request: Request, profile_update: UserUpdate, curr
 
     updated_user = {**existing_user, **updates}
     sync_provider_profile(firestore, current_user["uid"], updated_user)
-    return {"message": "Profile updated", "user": updated_user}
+    return {"message": "Profile updated", "user": serialize_public_role_fields(updated_user)}
 
 
 @router.get("/dashboard")
@@ -216,7 +216,7 @@ async def get_user_settings(current_user: dict = Depends(get_current_user)):
         "fname": first_name,
         "lname": last_name,
         "email": user.get("email") or current_user.get("email"),
-        "role": role,
+        "role": public_role(role),
         "language": user.get("language", "en"),
         "ai_instructions": user.get("ai_instructions", "") or "",
     }
