@@ -130,6 +130,7 @@ export default function Settings(props) {
       <SettingsSidebar
         navigation={{ activeSection, handleNavigate }}
         sidebarLabels={sidebarLabels}
+        name={`${formData.fname} ${formData.lname}`}
       />
 
       <div className="relative flex flex-1 flex-col" style={{ background: "#ffffff" }}>

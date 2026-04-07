@@ -2,6 +2,7 @@ import { Avatar } from "@mui/material"
 import Image from "next/image"
 
 export default function SettingsSidebar(props) {
+  const name = props.name
   const allLinks = props.sidebarLabels
   const nav = props.navigation
 
@@ -15,7 +16,7 @@ export default function SettingsSidebar(props) {
     >
       <div>
         <div className="mb-8 items-center gap-3">
-          <span className="text-sm font-semibold text-white">User 1</span>
+          <span className="text-m font-semibold text-white">{name}</span>
         </div>
 
         <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/50">
