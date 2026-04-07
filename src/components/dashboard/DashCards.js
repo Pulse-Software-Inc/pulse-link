@@ -10,15 +10,16 @@ function clamp(x, min, max) {
 }
 
 function ProgressBar({ value = 0, max = 100 }) {
-    const safeMax = max == 0 ? 1 : max;
-    const percen = clamp((value / max) * 100, 0, 100);
+    const safeMax = Number(max) > 0 ? Number(max) : 1;
+    const safeValue = Number.isFinite(Number(value)) ? Number(value) : 0;
+    const percent = clamp((safeValue / safeMax) * 100, 0, 100);
     
     return (
         <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
             <div
                 className="h-full rounded-full"
                 style={{
-                width: `${percen}%`,
+                width: `${percent}%`,
                 background: `linear-gradient(to right, #71E4FD, #B2C4FE, #D3B5FF, #ECB6E6)`
             }}
             />
@@ -31,7 +32,7 @@ export default function DB_card({ val }) {
     return (
         //icon and title at the top.
         <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_6px_0_rgba(0,0,0,0.06)] p-5">
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                     <Image
                         src={val.iconSrc}
@@ -44,8 +45,8 @@ export default function DB_card({ val }) {
                     <h3 className="font-semibold text-gray-800">{val.title}</h3>
                 </div>
                 {/*just includes the value, progress and footer*/}
-                <div className="mt-4">
-                    <div className="text-gray-900">
+                <div className="w-full max-w-[180px] text-right">
+                    <div className="text-gray-900 flex items-baseline justify-end gap-1">
                         <span className="text-2xl font-semibold">{val.main}</span>
                         {val.sub ? <span className="text-sm text-gray-500">{val.sub}</span> : null}
                     </div>

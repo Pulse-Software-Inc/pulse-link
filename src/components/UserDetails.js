@@ -249,7 +249,7 @@ export default function UserGraphs({ client, onClose }) {
 				main: details.steps.toLocaleString(),
 				sub: ` / ${STEP_GOAL.toLocaleString()}`,
 				progress: { value: details.steps, max: STEP_GOAL },
-				footer: '4% more than yesterday',
+				footer: null,
 			},
 			{
 				id: 'calories',
@@ -258,7 +258,7 @@ export default function UserGraphs({ client, onClose }) {
 				main: details.calories.toLocaleString(),
 				sub: ` / ${CALORIE_GOAL.toLocaleString()}`,
 				progress: { value: details.calories, max: CALORIE_GOAL },
-				footer: 'Daily calorie target',
+				footer: null,
 			},
 			{
 				id: 'heart-rate',
@@ -266,7 +266,7 @@ export default function UserGraphs({ client, onClose }) {
 				title: 'Heart Rate',
 				main: details.heartRate > 0 ? details.heartRate.toLocaleString() : 'N/A',
 				sub: details.heartRate > 0 ? ' BPM' : '',
-				footer: `Status: ${details.heartStatus} | Resting: ${details.restingHeartRate > 0 ? details.restingHeartRate : 'N/A'} BPM`,
+				footer: null,
 			},
 		];
 	}, [details]);
