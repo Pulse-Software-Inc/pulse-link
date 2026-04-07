@@ -4,15 +4,7 @@ import proSettings from './data/proSettings.json'
 import userSettings from './data/userSettings.json'
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
-import {
-  IconButton,
-  Button,
-  Avatar,
-  TextField,
-  Chip,
-  Switch,
-  FormControlLabel,
-} from "@mui/material"
+import { IconButton } from "@mui/material"
 import Image from "next/image"
 import { useRouter } from 'next/navigation';
 import SettingsSidebar from "@/components/util/SettingsSidebar"
@@ -30,8 +22,6 @@ export default function Settings(props) {
   const searchParams = useSearchParams()
   const role = searchParams.get("role")   // "user" | "professional"
 
-  // states
-  // const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState(() => {
     if (role === 'user') return userSettings
     if (role === 'professional') return proSettings
@@ -42,7 +32,6 @@ export default function Settings(props) {
   // GET current settings from backend
   // useEffect(() => {
   //   async function fetchSettings() {
-  //     try {
   //       const res = await fetch("http://localhost:8000/api/v1/users/settings/", {
   //         method: 'GET', headers: {
   //           'Authorization': `Bearer ${idToken}`,
@@ -50,13 +39,8 @@ export default function Settings(props) {
   //         }
   //       }); // your endpoint
   //       const data = await res.json()
-  //       setCurrentSettings(data)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-  //   fetchSettings()
-  // }, [])
+  //       setFormData(data)
+  //   }}, [])
 
   let sidebarLabels = [
     { id: "user-profile", label: "User Profile" },
@@ -148,16 +132,20 @@ export default function Settings(props) {
             <Image src="/CrossX_Icon.svg" alt="Close" width={24} height={24} />
           </IconButton>
         </div>
-        <div ref={scrollRef} className="settings-scroll flex-1 overflow-y-auto mx-auto max-w-2xl px-10 py-10">
+        <div ref={scrollRef} className="settings-scroll flex-1 overflow-y-auto mx-auto px-10 py-10">
           <div className="flex flex-col gap-10">
             <UserProfileSection formData={formData} updateField={updateField} />
             <hr style={{ borderColor: "#e5e7eb" }} />
             <DataPrivacySection />
             <hr style={{ borderColor: "#e5e7eb" }} />
-            <DevicesSection formData={formData} updateField={updateField} />
-            <hr style={{ borderColor: "#e5e7eb" }} />
-            <NotificationsSection formData={formData} updateField={updateField} />
-            <hr style={{ borderColor: "#e5e7eb" }} />
+            {role == 'user' && (<><DevicesSection formData={formData} updateField={updateField} />
+              <hr style={{ borderColor: "#e5e7eb" }} />
+              <NotificationsSection formData={formData} updateField={updateField} />
+              <hr style={{ borderColor: "#e5e7eb" }} />
+              <GoalsSection formData={formData} updateField={updateField} />
+              <hr style={{ borderColor: "#e5e7eb" }} />
+              <ModelInstructionSection formData={formData} updateField={updateField} /></>)}
+            {role == 'professional' && (<InviteClientsSection formData={formData} updateField={updateField} />)}
           </div>
         </div>
       </div>

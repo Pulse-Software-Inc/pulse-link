@@ -1,7 +1,9 @@
 import { Avatar } from "@mui/material"
+import { useRouter } from 'next/navigation';
 import Image from "next/image"
 
 export default function SettingsSidebar(props) {
+  const router = useRouter()
   const name = props.name
   const allLinks = props.sidebarLabels
   const nav = props.navigation
@@ -38,9 +40,9 @@ export default function SettingsSidebar(props) {
         </nav>
       </div>
 
-      <button className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white">
-        <Image src="public/Sidebar/LogOut_Icon.svg" alt="Log Out" width={20} height={20} />
-        Log Out
+      <button onClick={() => router.push('/auth/signout')} className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-xl font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white">
+        <Image src="/Sidebar/LogOut_Icon.svg" alt="Log Out" width={20} height={20} />
+        Sign Out
       </button>
     </aside>
   );

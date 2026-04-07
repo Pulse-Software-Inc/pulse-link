@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { TextField } from "@mui/material"
 
-/* ── User Profile ───────────────────────────────────── */
 export default function UserProfileSection(props) {
 
   const formData = props.formData
