@@ -12,7 +12,7 @@ import firebase_admin.auth as firebase_auth
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from app.core.security import get_current_user
+from app.core.security import get_current_user, public_role, serialize_public_role_fields
 from app.routers.notifications import create_notification_internal
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -76,7 +76,7 @@ async def get_current_user_profile(current_user: dict = Depends(get_current_user
     return {
         "uid": current_user["uid"],
         "email": current_user["email"],
-        "role": current_user["role"],
+        "role": public_role(current_user["role"]),
         "mfa_verified": current_user.get("mfa_verified", False),
         "password_expired": current_user.get("password_expired", False),
         "message": "Authentication successful"
@@ -85,7 +85,7 @@ async def get_current_user_profile(current_user: dict = Depends(get_current_user
 
 @router.get("/verify")
 async def verify_token(current_user: dict = Depends(get_current_user)):
-    return {"status": "valid", "user": current_user}
+    return {"status": "valid", "user": serialize_public_role_fields(current_user)}
 
 
 @router.get("/csrf")

@@ -21,6 +21,24 @@ def normalize_role(role: Optional[str]) -> str:
     return ROLE_ALIASES.get((role or "user").strip().lower(), role or "user")
 
 
+def public_role(role: Optional[str]) -> str:
+    normalized = normalize_role(role)
+    if normalized == "healthcare_provider":
+        return "professional"
+    return normalized
+
+
+def serialize_public_role_fields(payload):
+    if isinstance(payload, list):
+        return [serialize_public_role_fields(item) for item in payload]
+    if isinstance(payload, dict):
+        data = payload.copy()
+        if "role" in data:
+            data["role"] = public_role(data["role"])
+        return data
+    return payload
+
+
 async def verify_firebase_token(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security)

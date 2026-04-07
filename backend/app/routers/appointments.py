@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from app.core.security import get_current_user, require_role
+from app.core.security import get_current_user, public_role, require_role
 from app.routers.notifications import create_notification_internal
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
@@ -26,7 +26,7 @@ async def list_my_appointments(current_user: dict = Depends(get_current_user)):
         appointments = firestore.get_appointments_for_user(uid, role=role)
         return {
             "user_id": uid,
-            "role": role,
+            "role": public_role(role),
             "appointments": appointments,
             "count": len(appointments)
         }
