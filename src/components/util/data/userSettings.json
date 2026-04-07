@@ -25,6 +25,56 @@
       "device_type": "smartwatch",
       "brand": "Apple",
       "is_active": true,
+      "last_sync": "12:04"
+    },
+    {
+      "device_id": "device_2",
+      "device_name": "Whoop",
+      "device_type": "wearable",
+      "brand": "Whoop",
+      "is_active": false,
+      "last_sync": "13:05"
+    }
+  ],
+  "available_devices": [
+    {
+      "device_id": "device_fitbit_1",
+      "device_name": "Fitbit Sense 2",
+      "device_type": "smartwatch",
+      "brand": "Fitbit",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_garmin_1",
+      "device_name": "Garmin Forerunner",
+      "device_type": "smartwatch",
+      "brand": "Garmin",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_samsung_1",
+      "device_name": "Galaxy Watch 6",
+      "device_type": "smartwatch",
+      "brand": "Samsung",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_polar_1",
+      "device_name": "Polar H10",
+      "device_type": "heart_rate_monitor",
+      "brand": "Polar",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_oura_1",
+      "device_name": "Oura Ring Gen 3",
+      "device_type": "ring",
+      "brand": "Oura",
+      "is_active": false,
       "last_sync": null
     }
   ]
