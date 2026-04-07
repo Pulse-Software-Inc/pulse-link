@@ -18,7 +18,7 @@ export default function DataPrivacySection() {
         </a>
         {" and "}
         <a href="#" className="font-semibold underline" style={{ color: "#1e88e5" }}>
-          disconnecting your linked devices below.
+          unsyncing your linked devices below.
         </a>
       </p>
     </section>
