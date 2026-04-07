@@ -131,7 +131,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
 
       {slide === 0 ? (
         <>
-          <div className="h-[300px] flex items-end gap-4 px-2 pt-6 pb-2">
+          <div className="h-[420px] flex items-end gap-4 px-2 pt-6 pb-2">
             <div className="h-full w-12 flex flex-col justify-between text-[10px] text-gray-400">
               <span>{Math.round((maxSteps * 1.0) / 1000) * 1000}</span>
               <span>{Math.round((maxSteps * 0.75) / 1000) * 1000}</span>
@@ -149,7 +149,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
 
               <div className="relative h-full flex items-end justify-between gap-4 px-3">
                 {barData.map((d) => {
-                  const MAX_BAR_PX = 230;
+                  const MAX_BAR_PX = 300;
                   const h = Math.max(3, (d.value / maxSteps) * MAX_BAR_PX);
 
                   return (
@@ -195,28 +195,13 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
                   {[0, 0.25, 0.5, 0.75, 1].map((t) => {
                     const y = hrSvg.padT + (1 - t) * hrSvg.plotH;
                     return (
-                      <line
-                        key={t}
-                        x1={hrSvg.padL}
-                        x2={hrSvg.W - hrSvg.padR}
-                        y1={y}
-                        y2={y}
-                        stroke="#e5e7eb"
-                        strokeDasharray="6 6"
-                      />
-                    );
-                  })}
-
-                  {hrSvg.coords.map((c) => (
-                    <line
-                      key={c.x}
-                      x1={c.x}
-                      x2={c.x}
-                      y1={hrSvg.padT}
-                      y2={hrSvg.baseY}
-                      stroke="#e5e7eb"
-                      strokeDasharray="6 6"
-                    />
+                      <line key={t} x1={hrSvg.padL} x2={hrSvg.W - hrSvg.padR} y1={y} y2={y}
+                        stroke="#e5e7eb" strokeDasharray="6 6" />
+                      );
+                      })}
+                {hrSvg.coords.map((c) => (
+                <line key={c.x} x1={c.x} x2={c.x} y1={hrSvg.padT} y2={hrSvg.baseY}
+                  stroke="#e5e7eb" strokeDasharray="6 6" />
                   ))}
 
                   <path d={hrSvg.area} fill="rgba(255, 99, 99, 0.25)" />
@@ -231,24 +216,56 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
                   })}
 
                   {hrSvg.coords.map((c) => (
+                    <g key={c.x+'dot'}>
+                      <circle cx={c.x} cy={c.y} r="6" fill="rgb(255, 99, 99)" />
+                      <circle cx={c.x} cy={c.y} r="3" fill="white" />
                     <text
-                      key={c.x + c.label}
+                      key={c.x+c.label}
                       x={c.x}
-                      y={hrSvg.baseY + 28}
+                      y={hrSvg.baseY+45}
                       textAnchor="middle"
                       fontSize="16"
                       fill="#6b7280"
                     >
                       {c.label}
-                    </text>
+                      </text>
+                    </g>
                   ))}
-                    
+
+                  {hrSvg.coords.map((c) => (
+                    <g key={c.x + 'dot'}>
+                      <circle cx={c.x} cy={c.y} r="6" fill="rgb(255, 99, 99)" />
+                      <circle cx={c.x} cy={c.y} r="3" fill="white" />
+                      <text x={c.x} y={c.y - 14} textAnchor="middle" fontSize="14"
+                        fontWeight="500" fill="rgb(220, 60, 60)">
+                        {c.bpm}
+                      </text>
+                    </g>
+                  ))}
                 </svg>
-              </div>
+                </div>
+                
+                 <div className="mt-2 grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <div className="text-[10px] text-gray-400">Min BPM</div>
+                    <div className="text-sm text-gray-700 font-medium">{hrYMin}</div>
+                 </div>
+                <div>
+                  <div className="text-[10px] text-gray-400">Avg Heart Rate</div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    {Math.round(hrSvg.coords.reduce((sum, c) => sum + c.bpm, 0) / hrSvg.coords.length)} BPM
+                  </div>
+                </div>
+               <div>
+                 <div className="text-[10px] text-gray-400">Max BPM</div>
+                <div className="text-sm text-gray-700 font-medium">{hrYMax}</div>
+                </div>
+               </div>
             </>
           )}
         </>
       }
+
       <div className="mt-5 flex items-center justify-center gap-2">
         <button
           type="button"
