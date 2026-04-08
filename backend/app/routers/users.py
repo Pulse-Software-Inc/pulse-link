@@ -13,6 +13,49 @@ from app.models.user import UserUpdate, ConsentSettings, UserSettingsUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+AVAILABLE_DEVICES = [
+    {
+        "device_id": "device_fitbit_1",
+        "device_name": "Fitbit Sense 2",
+        "device_type": "smartwatch",
+        "brand": "Fitbit",
+        "is_active": False,
+        "last_sync": None,
+    },
+    {
+        "device_id": "device_garmin_1",
+        "device_name": "Garmin Forerunner",
+        "device_type": "smartwatch",
+        "brand": "Garmin",
+        "is_active": False,
+        "last_sync": None,
+    },
+    {
+        "device_id": "device_samsung_1",
+        "device_name": "Galaxy Watch 6",
+        "device_type": "smartwatch",
+        "brand": "Samsung",
+        "is_active": False,
+        "last_sync": None,
+    },
+    {
+        "device_id": "device_polar_1",
+        "device_name": "Polar H10",
+        "device_type": "heart_rate_monitor",
+        "brand": "Polar",
+        "is_active": False,
+        "last_sync": None,
+    },
+    {
+        "device_id": "device_oura_1",
+        "device_name": "Oura Ring Gen 3",
+        "device_type": "ring",
+        "brand": "Oura",
+        "is_active": False,
+        "last_sync": None,
+    },
+]
+
 
 def build_provider_profile(user_data: dict) -> dict:
     first_name = (user_data.get("first_name") or "").strip()
@@ -216,6 +259,7 @@ async def get_user_settings(current_user: dict = Depends(get_current_user)):
         "fname": first_name,
         "lname": last_name,
         "email": user.get("email") or current_user.get("email"),
+        "password": "●●●●●●●●●●",
         "role": public_role(role),
         "language": user.get("language", "en"),
         "ai_instructions": user.get("ai_instructions", "") or "",
@@ -229,6 +273,7 @@ async def get_user_settings(current_user: dict = Depends(get_current_user)):
     settings["notification_preferences"] = firestore.get_notification_settings(current_user["uid"])
     settings["emergency_settings"] = get_emergency_settings(user)
     settings["devices"] = [serialize_device(device) for device in firestore.get_user_devices(current_user["uid"])]
+    settings["available_devices"] = AVAILABLE_DEVICES
     return settings
 
 
