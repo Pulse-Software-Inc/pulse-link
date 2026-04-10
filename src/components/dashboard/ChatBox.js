@@ -1,7 +1,12 @@
 'use client';
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import React, { useState, useRef, useEffect } from 'react';
+import Avatar from '@mui/material/Avatar'
+
+
 
 export default function ChatBox() {
+  let userdata = null
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: 'bot', text: "Hey! Ask me anything about your fitness data." }
@@ -9,6 +14,18 @@ export default function ChatBox() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
+  const genAI = new GoogleGenerativeAI('AIzaSyBXlAm4f3IcwqFv6JcjesvdXvzC08zSEsI')
+  useEffect(() => {
+    fetch('/userdata.json')
+      .then(res => res.json())
+      .then(data => userdata = data)
+  }, []) // empty array = runs once on mount
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    systemInstruction: `You are a concise health assistant responding in a chat.
+                        Keep all responses under 3 sentences with no bullet points,
+                        headers or fluff. The user's data here: ${userdata} is used for context`
+  })
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -20,10 +37,9 @@ export default function ChatBox() {
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setLoading(true);
-    setTimeout(() => {
-      setMessages((prev) => [...prev, { role: 'bot', text: 'Hey! Ask me anything about your fitness data.' }]);
-      setLoading(false);
-    }, 600);
+    const result = await model.generateContent(text)
+    setMessages((prev) => [...prev, { role: 'bot', text: result.response.text() }]);
+    setLoading(false);
   };
 
   return (
@@ -33,8 +49,14 @@ export default function ChatBox() {
 
           <div className="flex items-center justify-between bg-blue-500 px-4 py-3">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-white text-xs font-medium">C</div>
-              <span className="text-white text-sm font-medium">Fitness Chatbot</span>
+              <div className="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-white text-xs font-medium">
+                <Avatar
+                  src="/PulseLink_logo.svg"
+                  alt="User Name"
+                  sx={{ width: 60, height: 60 }}
+                />
+              </div>
+              <span className="text-white text-sm font-medium">Pulsey</span>
             </div>
             <button onClick={() => setOpen(false)} className="text-white text-lg leading-none bg-transparent border-none cursor-pointer">✕</button>
           </div>
@@ -58,7 +80,7 @@ export default function ChatBox() {
             )}
             <div ref={bottomRef} />
           </div>
-          
+
           <div className="flex items-center gap-2 px-3 py-2 border-t border-gray-200 bg-white">
             <input
               value={input}
