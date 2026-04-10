@@ -151,7 +151,7 @@ export default function SignUpPage() {
                 <input
                   type="text"
                   name="age"
-                  value={formData.firstName}
+                  value={formData.age}
                   onChange={handleInputChange}
                   required
                   className={inputBoxStyling}
@@ -162,7 +162,7 @@ export default function SignUpPage() {
                 <input
                   type="text"
                   name="gender"
-                  value={formData.lastName}
+                  value={formData.gender}
                   onChange={handleInputChange}
                   required
                   className={inputBoxStyling}
