@@ -77,6 +77,7 @@ export default function Settings(props) {
     // })
 
     // if (!res.ok) throw new Error("Failed to save settings")
+    router.back()
   }
 
   //OLD CODE
