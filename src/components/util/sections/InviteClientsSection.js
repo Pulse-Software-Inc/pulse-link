@@ -12,13 +12,13 @@ const STATUS_STYLES = {
 }
 
 export default function InviteClientsSection({ formData, updateField }) {
-  if (!formData.invite_clients) return null
-
   const [newEmail, setNewEmail] = useState("")
   const [newMessage, setNewMessage] = useState("")
   const [emailError, setEmailError] = useState("")
   const [sending,    setSending]    = useState(false)
   const [sendError,  setSendError]  = useState("")
+
+  if (!formData.invite_clients) return null
 
   const invites = formData.invite_clients
 

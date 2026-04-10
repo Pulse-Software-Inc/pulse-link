@@ -56,8 +56,8 @@ export default function Settings(props) {
     sidebarLabels.push({ id: "invite-clients", label: "Invite Clients" })
   } else
     router.push('/util/settings?role=user');
+  const sectionIds = sidebarLabels.map(l => l.id)
 
-  console.log(formData)
   // Handlers
   // In Settings.js, pass down to sections:
   const updateField = (key, value) =>
