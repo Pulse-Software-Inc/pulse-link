@@ -17,6 +17,7 @@ import DevicesSection from "./sections/DevicesSection"
 import ModelInstructionSection from "./sections/ModelInstructionSection"
 
 
+
 export default function Settings(props) {
   // finding ?role="" value
   const searchParams = useSearchParams()
@@ -62,6 +63,21 @@ export default function Settings(props) {
   // In Settings.js, pass down to sections:
   const updateField = (key, value) =>
     setFormData(prev => ({ ...prev, [key]: value }))
+
+  // Saving settings
+  async function handleExit(formData) {
+    // Commented out for dummy testing
+    // const res = await fetch("http://localhost:8000/api/v1/users/settings", {
+    //   method: "PUT",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Authorization": `Bearer ${idToken}`
+    //   },
+    //   body: JSON.stringify(formData),
+    // })
+
+    // if (!res.ok) throw new Error("Failed to save settings")
+  }
 
   //OLD CODE
   const [activeSection, setActiveSection] = useState("user-profile")
@@ -120,7 +136,7 @@ export default function Settings(props) {
       <div className="relative flex flex-1 flex-col" style={{ background: "#ffffff" }}>
         <div className="absolute right-5 top-5 z-10">
           <IconButton
-            onClick={() => router.back()}
+            onClick={() => handleExit(formData)}
             size="small"
             sx={{
               color: "#ffffff",

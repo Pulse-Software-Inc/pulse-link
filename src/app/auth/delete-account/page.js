@@ -15,7 +15,7 @@ export default function DeleteAccountPage() {
 
   const handleDelete = () => {
     setIsDeleting(true)
-    // Connect to API or Cloud??
+    // Connect to API
 
 
     setIsDeleting(false)
