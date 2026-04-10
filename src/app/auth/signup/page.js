@@ -142,6 +142,30 @@ export default function SignUpPage() {
               </div>
             </div>
 
+            {/* Age & Gender Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={boxLabelStyling}>Age</label>
+                <input
+                  type="text"
+                  name="age"
+                  value={formData.firstName}
+                  required
+                  className={inputBoxStyling}
+                />
+              </div>
+              <div>
+                <label className={boxLabelStyling}>Gender</label>
+                <input
+                  type="text"
+                  name="gender"
+                  value={formData.lastName}
+                  required
+                  className={inputBoxStyling}
+                />
+              </div>
+            </div>
+
             {/* Email Field */}
             <div>
               <label className={boxLabelStyling}>Email address</label>
