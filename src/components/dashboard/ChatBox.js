@@ -14,7 +14,7 @@ export default function ChatBox() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
-  const genAI = new GoogleGenerativeAI('AIzaSyBXlAm4f3IcwqFv6JcjesvdXvzC08zSEsI')
+  const genAI = new GoogleGenerativeAI('AIzaSyBK2xOaCPkbK9hHU0HWHeXN4lR0KlTqjbI')
   useEffect(() => {
     fetch('/userdata.json')
       .then(res => res.json())
