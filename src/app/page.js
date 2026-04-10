@@ -27,24 +27,14 @@ export default function LandingPage() {
             borderRadius="12px" px={4} py={1.5} text="Get Started" />
         </div>
 
-        {/* Right Content (Bloat Code To-Be-Replaced When Mascot Is Ready) */}
+        {/* Right Panel */}
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-8 sm:p-10 md:p-12 lg:p-16 flex items-center justify-center min-h-[400px] md:min-h-full">
           <div className="w-full h-full flex items-center justify-center">
-            {/* Replace this placeholder with your mascot image */}
-            <div className="border-[3px] border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-white/50 w-full h-full min-h-[300px]">
-              <p className="text-gray-400 text-center p-4 text-sm">
-                Mascot Image Placeholder
-                <br />
-                <span className="text-xs">(Add your image here)</span>
-              </p>
-            </div>
-            {/* When you're ready, replace the placeholder with:
-              <img
-                src="/path-to-your-mascot.png"
-                alt="PulseLink Mascot"
-                className="w-full h-full object-contain max-w-md"
-              />
-              */}
+            <img
+              src="/Mascot/pulseyhappy.png"
+              alt="Pulse Link Logo"
+              className="w-full h-full object-contain max-w-md"
+            />
           </div>
         </div>
       </div>

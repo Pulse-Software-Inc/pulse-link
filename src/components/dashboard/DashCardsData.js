@@ -3,11 +3,12 @@
 //using this file for the data going to be used in the DB cards.
 
 import { useEffect, useState } from 'react';
+// import { useAuth } from "@/lib/maintainSessionToken.js"
 
 const num= (x,y=0) => (Number.isFinite(Number(x)) ? Number(x) : y);
 
-const latestTime = (arr = []) => 
-    Array.isArray(arr) && arr.length ? arr.reduce((best, cur) => 
+const latestTime = (arr = []) =>
+    Array.isArray(arr) && arr.length ? arr.reduce((best, cur) =>
         new Date(cur?.timestamp).getTime() > new Date(best?.timestamp).getTime() ? cur : best) : null;
 
 export default function useDB_cardsData(
@@ -24,6 +25,19 @@ export default function useDB_cardsData(
             try {
                 setLoading(true);
                 setError('');
+                // Commented for testing as approved by prof Ali
+                // const { idToken } = useAuth()
+                // const res = await fetch("http://localhost:8000/api/v1/users/dashboard", {
+                //     method: "GET",
+                //     headers: {
+                //         "Authorization": `Bearer ${idToken}`,
+                //         "Content-Type": "application/json",
+                //     },
+                // })
+
+                // if (!res.ok) throw new Error("Failed to fetch dashboard")
+
+                // return res.json()
                 const res = await fetch(jsonPath, { cache: 'no-store' });
                 if (!res.ok) throw new Error(`Failed to load: ${jsonPath}`);
                 const json = await res.json();
@@ -71,9 +85,9 @@ export default function useDB_cardsData(
                 if (!cancelled) setLoading(false);
             }
         })();
-        
+
         return () => { cancelled = true; };
     }, [jsonPath, stepGoal, kcalGoal]);
 
     return {cards, loading, error};
-} 
+}

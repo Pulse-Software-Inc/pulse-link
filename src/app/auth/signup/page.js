@@ -42,42 +42,44 @@ export default function SignUpPage() {
     return styling
   }
 
-  {/* API Calls Here, Come Back On Issue #33*/ }
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    // e.preventDefault();
 
-    let createdUser = null;
+    // let createdUser = null;
 
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      createdUser = userCredential.user;
-      const idToken = await createdUser.getIdToken();
-      const response = await fetch('http://localhost:8000/api/v1/users/me', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          role: formData.role
-        }),
-      });
+    // try {
+    //   const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+    //   createdUser = userCredential.user;
+    //   const idToken = await createdUser.getIdToken();
+    //   const response = await fetch('http://localhost:8000/api/v1/users/me', {
+    //     method: 'PUT',
+    //     headers: {
+    //       'Authorization': `Bearer ${idToken}`,
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //       firstName: formData.firstName,
+    //       lastName: formData.lastName,
+    //       email: formData.email,
+    //       role: formData.role
+    //     }),
+    //   });
 
-      if (!response.ok) {
-        throw new Error();
-      }
+    //   if (!response.ok) {
+    //     throw new Error();
+    //   }
 
-      router.push('/auth/login');
-    } catch {
-      if (createdUser) {
-        try {
-          await deleteUser(createdUser);
-        } catch {}
-      }
-    }
+    //   router.push('/auth/login');
+    // } catch {
+    //   if (createdUser) {
+    //     try {
+    //       await deleteUser(createdUser);
+    //     } catch {}
+    //   }
+    // }
+
+    // For Testing As Approved By Prof Ali
+    router.push('/auth/login')
   };
 
   return (
@@ -150,6 +152,7 @@ export default function SignUpPage() {
                   type="text"
                   name="age"
                   value={formData.firstName}
+                  onChange={handleInputChange}
                   required
                   className={inputBoxStyling}
                 />
@@ -160,6 +163,7 @@ export default function SignUpPage() {
                   type="text"
                   name="gender"
                   value={formData.lastName}
+                  onChange={handleInputChange}
                   required
                   className={inputBoxStyling}
                 />

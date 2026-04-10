@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { TextField, IconButton } from "@mui/material"
+// import { useAuth } from "@/lib/maintainSessionToken.js"
 
 export default function DeleteAccountPage() {
   const router = useRouter()
@@ -13,10 +14,20 @@ export default function DeleteAccountPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleted, setDeleted] = useState(false)
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsDeleting(true)
-    // Connect to API
+    // // Connect to API
+    // const { idToken, signOut } = useAuth()
+    // const res = await fetch("http://localhost:8000/api/v1/users/me", {
+    //   method: "DELETE",
+    //   headers: {
+    //     "Authorization": `Bearer ${idToken}`,
+    //     "Content-Type": "application/json",
+    //   },
+    // })
 
+
+    // if (!res.ok) throw new Error("Failed to delete account")
 
     setIsDeleting(false)
     setDeleted(true) // or error occured

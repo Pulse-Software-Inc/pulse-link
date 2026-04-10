@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
+// import { useAuth } from "@/lib/maintainSessionToken.js"
 
 function toNum(x, fallback = 0) {
   if (typeof x === 'string') x = x.replace(/,/g, '').trim();
@@ -13,20 +14,20 @@ function dayLabel(dateStr) {
 }
 
 function buildHeartRatePaths(points, yMin, yMax) {
-  const W =1000;
-  const H =260;
-  const padL= 70;
-  const padR= 30;
-  const padT= 20;
-  const padB=45;
+  const W = 1000;
+  const H = 260;
+  const padL = 70;
+  const padR = 30;
+  const padT = 20;
+  const padB = 45;
 
-  const plotW=W-padL- padR;
-  const plotH=H-padT - padB;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
 
-  const n=points.length || 1;
+  const n = points.length || 1;
 
-  const xAt=(i)=>padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
-  const yAt=(v) => {
+  const xAt = (i) => padL + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+  const yAt = (v) => {
     const t = (v - yMin) / (yMax - yMin || 1);
     const clamped = Math.max(0, Math.min(1, t));
     return padT + (1 - clamped) * plotH;
@@ -54,13 +55,26 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
   const [weekly, setWeekly] = useState(null);
   const [hrDaily, setHrDaily] = useState(null);
   const [error, setError] = useState('');
-  const [slide, setSlide] = useState(0); 
+  const [slide, setSlide] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         setError('');
+        // Commented for testing as approved by prof Ali
+        // const { idToken } = useAuth()
+        // const res = await fetch("http://localhost:8000/api/v1/users/dashboard", {
+        //     method: "GET",
+        //     headers: {
+        //         "Authorization": `Bearer ${idToken}`,
+        //         "Content-Type": "application/json",
+        //     },
+        // })
+
+        // if (!res.ok) throw new Error("Failed to fetch dashboard")
+
+        // return res.json()
         const res = await fetch(jsonPath, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Failed to load: ${jsonPath}`);
         const json = await res.json();
@@ -93,7 +107,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
     const vals = barData.map((d) => d.value);
     return Math.max(...vals, 1);
   }, [barData]);
-//Heart rate line chart data
+  //Heart rate line chart data
   const hrPoints = useMemo(() => hrDaily?.points || [], [hrDaily]);
   const hrYMin = toNum(hrDaily?.y_min, 40);
   const hrYMax = toNum(hrDaily?.y_max, 120);
@@ -184,7 +198,7 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
             </div>
           </div>
         </>
-      ) : 
+      ) :
         <>
           {!hrSvg ? (
             <div className="p-6 text-sm text-gray-500">No heart rate data found in heart_rate_daily.</div>
@@ -197,11 +211,11 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
                     return (
                       <line key={t} x1={hrSvg.padL} x2={hrSvg.W - hrSvg.padR} y1={y} y2={y}
                         stroke="#e5e7eb" strokeDasharray="6 6" />
-                      );
-                      })}
-                {hrSvg.coords.map((c) => (
-                <line key={c.x} x1={c.x} x2={c.x} y1={hrSvg.padT} y2={hrSvg.baseY}
-                  stroke="#e5e7eb" strokeDasharray="6 6" />
+                    );
+                  })}
+                  {hrSvg.coords.map((c) => (
+                    <line key={c.x} x1={c.x} x2={c.x} y1={hrSvg.padT} y2={hrSvg.baseY}
+                      stroke="#e5e7eb" strokeDasharray="6 6" />
                   ))}
 
                   <path d={hrSvg.area} fill="rgba(255, 99, 99, 0.25)" />
@@ -216,18 +230,18 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
                   })}
 
                   {hrSvg.coords.map((c) => (
-                    <g key={c.x+'dot'}>
+                    <g key={c.x + 'dot'}>
                       <circle cx={c.x} cy={c.y} r="6" fill="rgb(255, 99, 99)" />
                       <circle cx={c.x} cy={c.y} r="3" fill="white" />
-                    <text
-                      key={c.x+c.label}
-                      x={c.x}
-                      y={hrSvg.baseY+45}
-                      textAnchor="middle"
-                      fontSize="16"
-                      fill="#6b7280"
-                    >
-                      {c.label}
+                      <text
+                        key={c.x + c.label}
+                        x={c.x}
+                        y={hrSvg.baseY + 45}
+                        textAnchor="middle"
+                        fontSize="16"
+                        fill="#6b7280"
+                      >
+                        {c.label}
                       </text>
                     </g>
                   ))}
@@ -243,24 +257,24 @@ export default function WeeklyBarChart({ jsonPath = '/userdata.json' }) {
                     </g>
                   ))}
                 </svg>
-                </div>
-                
-                 <div className="mt-2 grid grid-cols-3 gap-4 text-center">
+              </div>
+
+              <div className="mt-2 grid grid-cols-3 gap-4 text-center">
                 <div>
-                    <div className="text-[10px] text-gray-400">Min BPM</div>
-                    <div className="text-sm text-gray-700 font-medium">{hrYMin}</div>
-                 </div>
+                  <div className="text-[10px] text-gray-400">Min BPM</div>
+                  <div className="text-sm text-gray-700 font-medium">{hrYMin}</div>
+                </div>
                 <div>
                   <div className="text-[10px] text-gray-400">Avg Heart Rate</div>
                   <div className="text-sm text-gray-700 font-medium">
                     {Math.round(hrSvg.coords.reduce((sum, c) => sum + c.bpm, 0) / hrSvg.coords.length)} BPM
                   </div>
                 </div>
-               <div>
-                 <div className="text-[10px] text-gray-400">Max BPM</div>
-                <div className="text-sm text-gray-700 font-medium">{hrYMax}</div>
+                <div>
+                  <div className="text-[10px] text-gray-400">Max BPM</div>
+                  <div className="text-sm text-gray-700 font-medium">{hrYMax}</div>
                 </div>
-               </div>
+              </div>
             </>
           )}
         </>

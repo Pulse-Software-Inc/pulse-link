@@ -4,7 +4,6 @@ import FormButton from "@/components/basics/FormButton"
 import UserHeader from "@/components/basics/UserHeader"
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 {/* Firebase JS SDK For Authentication */ }
@@ -21,25 +20,30 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempt:', { loginData });
-    // Only redirects when login is successful
-    const userCredential = await signInWithEmailAndPassword(auth, loginData.email, loginData.password); // Mention Firebase Security Features, Fails if Email exists
-    const idToken = await userCredential.user.getIdToken();
-    const response = await fetch('http://localhost:8000/api/v1/users/me', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${idToken}`,
-        'Content-Type': 'application/json',
-      }
-    });
+    // // Handle login logic here
+    // console.log('Login attempt:', { loginData });
+    // // Only redirects when login is successful
+    // const userCredential = await signInWithEmailAndPassword(auth, loginData.email, loginData.password); // Mention Firebase Security Features, Fails if Email exists
+    // const idToken = await userCredential.user.getIdToken();
+    // const response = await fetch('http://localhost:8000/api/v1/users/me', {
+    //   method: 'GET',
+    //   headers: {
+    //     'Authorization': `Bearer ${idToken}`,
+    //     'Content-Type': 'application/json',
+    //   }
+    // });
 
-    const data = await response.json();
-    console.log(data);
+    // const data = await response.json();
+    // console.log(data);
 
-    if (response.ok) {
-      router.push('/auth/login');
-    }
+    // if (response.ok) {
+    //   router.push('/auth/login');
+    // }
+
+    // For testing as approved by professor Ali
+    if(loginData.email == 'user1@puls.com') router.push('/main/user-dashboard');
+    else if (loginData.email == 'dr.smith@hospital.com') router.push('/main/prof-dashboard');
+
   };
 
   return (

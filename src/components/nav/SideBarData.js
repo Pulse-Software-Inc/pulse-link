@@ -11,14 +11,8 @@ const SidebarData = [
     {
         title: "Settings",
         icon: <Image src="/Sidebar/Settings_Icon.svg" alt="Settings" width={24} height={24} />,
-        link: "/util/user-settings"
+        link: "/util/settings?role=user"
     },
-    {  
-        title: "Devices",
-        icon: <Image src="/Sidebar/Devices_Icon.svg" alt="Devices" width={24} height={24} />,
-        link: "/util/devices"
-    },
-  
 ];
 
 export default SidebarData;

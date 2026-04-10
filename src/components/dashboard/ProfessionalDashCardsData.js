@@ -3,6 +3,7 @@
 // Data for doctor dashboard cards (Total Clients, Active Alerts, Synced Today)
 
 import { useEffect, useState } from 'react';
+// import { useAuth } from "@/lib/maintainSessionToken.js"
 
 export default function useDoctorDB_cardsData(jsonPath = '/prodata.json') {
     const [cards, setCards] = useState([]);
@@ -17,6 +18,19 @@ export default function useDoctorDB_cardsData(jsonPath = '/prodata.json') {
             try {
                 setLoading(true);
                 setError('');
+                // Commented for testing as approved by prof Ali
+                // const { idToken } = useAuth()
+                // const res = await fetch("http://localhost:8000/api/v1/providers/dashboard", {
+                //     method: "GET",
+                //     headers: {
+                //         "Authorization": `Bearer ${idToken}`,
+                //         "Content-Type": "application/json",
+                //     },
+                // })
+
+                // if (!res.ok) throw new Error("Failed to fetch dashboard")
+
+                // return res.json()
                 const res = await fetch(jsonPath, { cache: 'no-store' });
                 if (!res.ok) throw new Error(`Failed to load: ${jsonPath}`);
                 const json = await res.json();
@@ -87,7 +101,7 @@ export default function useDoctorDB_cardsData(jsonPath = '/prodata.json') {
                     },
                 ];
 
-                    setProviderName(doctor);
+                setProviderName(doctor);
                 if (!cancelled) {
                     setCards(mapped);
                     setClients(clientsList);
