@@ -124,7 +124,7 @@ function DoctorSidebar() {
                             className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-white transition-all hover:bg-white/20 lg:w-full"
                         >
                             <span className="text-xl">{val.icon}</span>
-                            <span className="font-medium">{val.title}</span>
+                            <span className="font-medium text-white">{val.title}</span>
                         </Link>
                     ))}
 
@@ -137,7 +137,7 @@ function DoctorSidebar() {
                         className="flex items-center gap-3 rounded-lg px-4 py-3 font-semibold text-red-500 transition-all hover:bg-white/20 lg:w-full"
                     >
                         <Image src="/Sidebar/LogOut_Icon.svg" alt="Sign out" width={24} height={24} />
-                        <span>Sign out</span>
+                        <span className="text-white">Sign out</span>
                     </Link>
                 </nav>
             </aside>
@@ -145,4 +145,4 @@ function DoctorSidebar() {
     );
 }
 
-export default DoctorSidebar; 
+export default DoctorSidebar;
