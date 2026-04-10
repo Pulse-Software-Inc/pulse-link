@@ -1,0 +1,82 @@
+{
+  "fname": "Amin",
+  "lname": "Afara",
+  "email": "user@example.com",
+  "password": "●●●●●●●●●●",
+  "language": "en",
+  "ai_instructions": "Focus on recovery.",
+  "daily_goals": {
+    "steps": 9000,
+    "calories": 2200,
+    "heart_rate": 75
+  },
+  "notification_preferences": {
+    "mute_all": false,
+    "general": true,
+    "appointment": true,
+    "provider_alert": true,
+    "emergency": true,
+    "companion": true,
+    "daily_summary": true
+  },
+  "devices": [
+    {
+      "device_id": "device_1",
+      "device_name": "Apple Watch",
+      "device_type": "smartwatch",
+      "brand": "Apple",
+      "is_active": true,
+      "last_sync": "12:04"
+    },
+    {
+      "device_id": "device_2",
+      "device_name": "Whoop",
+      "device_type": "wearable",
+      "brand": "Whoop",
+      "is_active": false,
+      "last_sync": "13:05"
+    }
+  ],
+  "available_devices": [
+    {
+      "device_id": "device_fitbit_1",
+      "device_name": "Fitbit Sense 2",
+      "device_type": "smartwatch",
+      "brand": "Fitbit",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_garmin_1",
+      "device_name": "Garmin Forerunner",
+      "device_type": "smartwatch",
+      "brand": "Garmin",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_samsung_1",
+      "device_name": "Galaxy Watch 6",
+      "device_type": "smartwatch",
+      "brand": "Samsung",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_polar_1",
+      "device_name": "Polar H10",
+      "device_type": "heart_rate_monitor",
+      "brand": "Polar",
+      "is_active": false,
+      "last_sync": null
+    },
+    {
+      "device_id": "device_oura_1",
+      "device_name": "Oura Ring Gen 3",
+      "device_type": "ring",
+      "brand": "Oura",
+      "is_active": false,
+      "last_sync": null
+    }
+  ]
+}

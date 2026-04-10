@@ -1,0 +1,14 @@
+{
+  "fname": "Amin",
+  "lname": "Afara",
+  "email": "user@example.com",
+  "password": "●●●●●●●●●●",
+  "language": "en",
+  "invite_clients": [
+    {
+      "email": "client@example.com",
+      "message": "Join PulseLink",
+      "status": "pending"
+    }
+  ]
+}
