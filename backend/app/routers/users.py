@@ -8,7 +8,17 @@ import firebase_admin.auth as firebase_auth
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from app.core.security import get_current_user, normalize_role, public_role, serialize_public_role_fields
-from app.core.dashboard import build_last_7_days_metrics, get_daily_goals, get_emergency_settings, serialize_device
+from app.core.dashboard import (
+    build_daily_summary,
+    build_heart_rate_daily,
+    build_last_7_days_metrics,
+    build_recent_biomarkers,
+    build_weekly_summary,
+    get_daily_goals,
+    get_dashboard_customization,
+    get_emergency_settings,
+    serialize_device,
+)
 from app.models.user import UserUpdate, ConsentSettings, UserSettingsUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -234,8 +244,25 @@ async def get_user_dashboard(current_user: dict = Depends(get_current_user)):
 
     first_name, last_name = get_name_parts(user)
     records = firestore.get_all_biomarkers(current_user["uid"])
+    consent = firestore.get_consent_settings(current_user["uid"])
+    devices = [serialize_device(device) for device in firestore.get_user_devices(current_user["uid"])]
+    public_user = serialize_public_role_fields(user)
+    summary = build_daily_summary(records)
+    weekly_summary = build_weekly_summary(records)
+    heart_rate_daily = build_heart_rate_daily(records)
+    biomarkers = build_recent_biomarkers(records, limit=25)
 
     return {
+        "user_id": current_user["uid"],
+        "email": user.get("email") or current_user.get("email"),
+        "profile": public_user,
+        "consent_settings": consent,
+        "dashboard_customization": get_dashboard_customization(user),
+        "biomarkers": biomarkers,
+        "summary": summary,
+        "weekly_summary": weekly_summary,
+        "heart_rate_daily": heart_rate_daily,
+        "devices": devices,
         "fname": first_name,
         "lname": last_name,
         "daily_goals": get_daily_goals(user),

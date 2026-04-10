@@ -25,19 +25,26 @@ export default function useDoctorDB_cardsData(jsonPath = '/prodata.json') {
                 const doctor = provider.name || json?.provider_name || 'Doctor';
 
                 const rawClients = json?.clients || json?.patients || [];
-                const clientsList = rawClients.map((p) => {
+                const clientsList = rawClients.map((p, index) => {
                     const displayName = p.name || p.fullName || p.displayName || p.email || p.uid || 'Unknown';
                     const lastSync = p.lastSync || p.last_activity || null;
                     const status = p.status || (p.consent_granted ? 'ACTIVE' : 'INACTIVE');
 
                     return {
-                        id: p.id || p.uid || p.email,
+                        id: p.id || p.uid || p.email || `client-${index}`,
                         name: displayName,
                         age: p.age ?? 'N/A',
                         lastSync,
                         lastSyncDisplay: lastSync ? new Date(lastSync).toLocaleDateString() : 'N/A',
                         status,
                         alerts: p.alerts || 0,
+                        summary: p.summary || null,
+                        weeklySummary: p.weekly_summary || p.weeklySummary || null,
+                        recentBiomarkers: Array.isArray(p.recent_biomarkers)
+                            ? p.recent_biomarkers
+                            : Array.isArray(p.recentBiomarkers)
+                                ? p.recentBiomarkers
+                                : [],
                     };
                 });
                 const activeClients = clientsList.filter(c => c.status === 'ACTIVE').length;
